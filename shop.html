@@ -2,255 +2,103 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-<title>#Sorria — scan a smile</title>
-<meta name="description" content="Log a smile to your #Sorria shirt's map." />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>shop — #Sorria</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="styles.css" />
-<link rel="stylesheet" href="scan.css" />
+<style>
+  .stub {
+    min-height: 70vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+    padding: 60px var(--gutter);
+  }
+  .stub__eyebrow {
+    font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--ink-quiet); margin-bottom: 20px;
+  }
+  .stub__title {
+    font-family: var(--display);
+    font-size: clamp(36px, 7vw, 56px);
+    font-weight: 500; letter-spacing: -0.025em;
+    line-height: 1.05; margin-bottom: 20px;
+    max-width: 600px;
+  }
+  .stub__title em { color: var(--smile-deep); }
+  .stub__body {
+    font-size: 16px; color: var(--ink-soft);
+    max-width: 460px; margin-bottom: 32px;
+  }
+  .shirts {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px; max-width: 640px; width: 100%; margin-bottom: 32px;
+  }
+  .shirt {
+    background: var(--paper-soft);
+    border-radius: 4px;
+    padding: 28px 20px;
+    border: 0.5px solid var(--line);
+  }
+  .shirt__name { font-family: var(--display); font-size: 18px; margin-top: 16px; }
+  .shirt__price { font-family: var(--mono); font-size: 13px; color: var(--ink-quiet); margin-top: 4px; }
+  .shirt__mock {
+    aspect-ratio: 1;
+    background: var(--paper);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    border: 0.5px solid var(--line);
+  }
+  .shirt__mock svg { color: var(--ink); width: 60%; height: 60%; }
+  .shirt__mock--text { font-family: "Inter"; font-weight: 500; font-size: 16px; text-align: center; line-height: 1.2; color: var(--ink); }
+</style>
 </head>
-<body class="scan-body">
-
-<!-- minimal nav -->
+<body>
 <nav class="nav">
-  <a href="index.html" class="nav__brand"><span class="brand-mark">#Sorria</span></a>
+  <a href="/" class="nav__brand"><span class="brand-mark">#Sorria</span></a>
   <div class="nav__meta">
-    <span class="nav__via">shirt № <span class="mono" id="nav-code">—</span></span>
+    <a href="index.html" class="nav__link">home</a>
+    <a href="map.html" class="nav__link">map</a>
   </div>
 </nav>
 
-<!-- ============================================================
-     VIEW 1: first-time scan — onboarding
-     ============================================================ -->
-<section class="view view--onboard" id="view-onboard" hidden>
-  <div class="view__inner">
+<main class="stub">
+  <p class="stub__eyebrow">the shop</p>
+  <h1 class="stub__title">pick your <em>playing piece.</em></h1>
+  <p class="stub__body">every shirt is unique — sewn with its own code, ready to be tracked across the world. shop opening soon.</p>
 
-    <!-- step 1: greeting -->
-    <div class="step step--active" data-step="greet">
-      <p class="step__eyebrow"><span class="dot"></span> first scan</p>
-
-      <h1 class="step__headline">
-        hi from shirt<br />
-        <em class="mono code-display" id="greet-code">—</em>
-      </h1>
-
-      <div class="step__body">
-        <p class="step__lede">this shirt has spread <strong>0 smiles</strong> so far.</p>
-        <p class="step__sub">someone just smiled at you, didn't they?</p>
-      </div>
-
-      <svg class="step__smiley" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <circle cx="100" cy="100" r="82" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" />
-        <line x1="72" y1="78" x2="72" y2="100" stroke="currentColor" stroke-width="8" stroke-linecap="round" />
-        <line x1="128" y1="78" x2="128" y2="100" stroke="currentColor" stroke-width="8" stroke-linecap="round" />
-        <path d="M 60 118 Q 100 162 140 118" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" />
-      </svg>
-
-      <div class="step__actions">
-        <button class="btn btn--primary" data-go="log">log the first smile</button>
-        <button class="btn btn--ghost" data-go="explain">what is this?</button>
-      </div>
-    </div>
-
-    <!-- step 2: log the smile -->
-    <div class="step" data-step="log">
-      <p class="step__eyebrow">log a smile</p>
-
-      <h2 class="step__headline step__headline--mid">
-        tell us<br />
-        <em>what happened.</em>
-      </h2>
-
-      <p class="step__sub" style="margin-bottom: 28px;">optional — but the stories are what make the map worth visiting.</p>
-
-      <div class="field">
-        <label class="field__label" for="log-city">where</label>
-        <select id="log-city" class="field__input">
-          <option value="">pick a city (optional)</option>
-          <option value="Austin, TX">Austin, TX</option>
-          <option value="New York, NY">New York, NY</option>
-          <option value="Los Angeles, CA">Los Angeles, CA</option>
-          <option value="Chicago, IL">Chicago, IL</option>
-          <option value="Miami, FL">Miami, FL</option>
-          <option value="Seattle, WA">Seattle, WA</option>
-          <option value="Denver, CO">Denver, CO</option>
-          <option value="Boston, MA">Boston, MA</option>
-          <option value="San Francisco, CA">San Francisco, CA</option>
-          <option value="Portland, OR">Portland, OR</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label class="field__label" for="log-story">what happened</label>
-        <textarea id="log-story" class="field__input field__input--text" placeholder="e.g. kid waved at me on the subway" maxlength="120"></textarea>
-        <p class="field__hint"><span id="log-char">0</span> / 120</p>
-      </div>
-
-      <div class="step__actions">
-        <button class="btn btn--primary" data-go="confirm">add to the map</button>
-        <button class="btn btn--ghost" data-go="greet">← back</button>
-      </div>
-    </div>
-
-    <!-- step 3: confirm -->
-    <div class="step" data-step="confirm">
-      <div class="confirm__icon">
-        <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <line x1="20" y1="22" x2="20" y2="30" stroke="#1A1714" stroke-width="4" stroke-linecap="round"/>
-          <line x1="40" y1="22" x2="40" y2="30" stroke="#1A1714" stroke-width="4" stroke-linecap="round"/>
-          <path d="M 16 36 Q 30 50 44 36" fill="none" stroke="#1A1714" stroke-width="4" stroke-linecap="round"/>
+  <div class="shirts">
+    <div class="shirt">
+      <div class="shirt__mock">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+          <line x1="36" y1="38" x2="36" y2="50" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+          <line x1="64" y1="38" x2="64" y2="50" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+          <path d="M 30 58 Q 50 78 70 58" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
         </svg>
       </div>
-
-      <h2 class="step__headline">
-        first smile<br />
-        <em>logged.</em>
-      </h2>
-
-      <p class="step__sub" style="margin-bottom: 28px;">this shirt is officially in the game. another smile is coming.</p>
-
-      <div class="shirt-card">
-        <p class="shirt-card__tag mono">SHIRT № <span id="confirm-code">—</span></p>
-        <div class="shirt-card__row">
-          <span class="shirt-card__label">smiles spread</span>
-          <span class="shirt-card__num mono">1</span>
-        </div>
-      </div>
-
-      <div class="step__actions">
-        <button class="btn btn--primary" data-go="claim">claim this shirt</button>
-        <button class="btn btn--ghost" data-go="dashboard">not now</button>
-      </div>
+      <p class="shirt__name">the classic</p>
+      <p class="shirt__price mono">$32 · soon</p>
     </div>
-
-    <!-- step 4: claim -->
-    <div class="step" data-step="claim">
-      <p class="step__eyebrow">claim this shirt</p>
-
-      <h2 class="step__headline step__headline--mid">
-        we'll remember it<br />
-        <em>next time.</em>
-      </h2>
-
-      <p class="step__sub" style="margin-bottom: 28px;">no password. just your email. we send a magic link.</p>
-
-      <div class="field">
-        <label class="field__label" for="claim-email">email</label>
-        <input type="email" id="claim-email" class="field__input" placeholder="you@email.com" />
-        <p class="field__hint">no spam. no newsletters unless you ask.</p>
+    <div class="shirt">
+      <div class="shirt__mock shirt__mock--text">
+        did you<br/>smile<br/>today?
       </div>
-
-      <div class="step__actions">
-        <button class="btn btn--primary" id="claim-submit">send the link</button>
-        <button class="btn btn--ghost" data-go="dashboard">skip — keep going</button>
-      </div>
+      <p class="shirt__name">the question</p>
+      <p class="shirt__price mono">$32 · soon</p>
     </div>
-
-    <!-- step 5: explain (for curious strangers) -->
-    <div class="step" data-step="explain">
-      <p class="step__eyebrow">what is this?</p>
-
-      <h2 class="step__headline step__headline--mid">
-        a t-shirt that<br />
-        <em>plays a game.</em>
-      </h2>
-
-      <div class="step__body">
-        <p>each #Sorria shirt has a unique code sewn into the hem. wear it. someone smiles. scan the label and log the smile to a live map.</p>
-        <p style="margin-top: 14px;">net profit from every shirt funds kids' causes.</p>
-      </div>
-
-      <div class="step__actions">
-        <a href="index.html" class="btn btn--primary">tell me more</a>
-        <a href="shop.html" class="btn btn--ghost">get a shirt</a>
-      </div>
-    </div>
-
   </div>
-</section>
 
-<!-- ============================================================
-     VIEW 2: returning wearer — dashboard
-     ============================================================ -->
-<section class="view view--dashboard" id="view-dashboard" hidden>
-  <div class="view__inner">
+  <a href="index.html" class="btn btn--primary">back to start</a>
+</main>
 
-    <header class="dash__header">
-      <p class="step__eyebrow"><span class="dot"></span> welcome back</p>
-      <h1 class="dash__headline">
-        shirt <em class="mono code-display" id="dash-code">—</em>
-      </h1>
-    </header>
-
-    <!-- the big number -->
-    <div class="dash__bignum">
-      <p class="dash__bignum-num mono" id="dash-total">0</p>
-      <p class="dash__bignum-label">smiles spread <span class="dash__bignum-since">since <span id="dash-since">today</span></span></p>
-    </div>
-
-    <!-- log another -->
-    <button class="btn btn--primary btn--full" id="dash-log">
-      <span class="btn__icon">+</span> log another smile
-    </button>
-
-    <!-- this shirt's history -->
-    <div class="dash__history">
-      <p class="step__eyebrow">history</p>
-      <ul class="history__list" id="dash-history">
-        <!-- populated by JS -->
-      </ul>
-    </div>
-
-    <!-- footer actions -->
-    <div class="dash__footer">
-      <a href="map.html" class="btn btn--ghost btn--full">see the world map</a>
-      <button class="dash__reset" id="dash-reset">reset this shirt's data</button>
-    </div>
-
+<footer class="footer">
+  <div class="footer__inner">
+    <p class="footer__tag">a smile is contagious. so is this.</p>
+    <p class="footer__meta mono">#Sorria · 2026 · all net profit donated</p>
   </div>
-</section>
-
-<!-- ============================================================
-     QUICK-LOG modal (for dashboard "log another")
-     ============================================================ -->
-<div class="modal" id="quick-modal" hidden>
-  <div class="modal__backdrop" id="quick-backdrop"></div>
-  <div class="modal__panel">
-    <button class="modal__close" id="quick-close" aria-label="close">×</button>
-    <p class="step__eyebrow">log a smile</p>
-    <h3 class="step__headline step__headline--small">tell us <em>what happened.</em></h3>
-
-    <div class="field" style="margin-top: 24px;">
-      <label class="field__label" for="quick-city">where</label>
-      <select id="quick-city" class="field__input">
-        <option value="">pick a city (optional)</option>
-        <option value="Austin, TX">Austin, TX</option>
-        <option value="New York, NY">New York, NY</option>
-        <option value="Los Angeles, CA">Los Angeles, CA</option>
-        <option value="Chicago, IL">Chicago, IL</option>
-        <option value="Miami, FL">Miami, FL</option>
-        <option value="Seattle, WA">Seattle, WA</option>
-        <option value="Denver, CO">Denver, CO</option>
-        <option value="Boston, MA">Boston, MA</option>
-        <option value="San Francisco, CA">San Francisco, CA</option>
-        <option value="Portland, OR">Portland, OR</option>
-      </select>
-    </div>
-
-    <div class="field">
-      <label class="field__label" for="quick-story">what happened</label>
-      <textarea id="quick-story" class="field__input field__input--text" placeholder="e.g. someone said i needed this today" maxlength="120"></textarea>
-    </div>
-
-    <button class="btn btn--primary btn--full" id="quick-submit" style="margin-top: 8px;">add to the map</button>
-  </div>
-</div>
-
-<!-- toast for success messages -->
-<div class="toast" id="toast" hidden></div>
-
-<script src="scan.js"></script>
+</footer>
 </body>
 </html>
