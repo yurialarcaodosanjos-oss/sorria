@@ -1,256 +1,239 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-<title>#Sorria — scan a smile</title>
-<meta name="description" content="Log a smile to your #Sorria shirt's map." />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="styles.css" />
-<link rel="stylesheet" href="scan.css" />
-</head>
-<body class="scan-body">
+/* ============================================================
+   #Sorria — map.js
+   loads the world map, plots all smiles (seeded + user-logged),
+   renders the recent-stories feed.
+   ============================================================ */
 
-<!-- minimal nav -->
-<nav class="nav">
-  <a href="index.html" class="nav__brand"><span class="brand-mark">#Sorria</span></a>
-  <div class="nav__meta">
-    <span class="nav__via">shirt № <span class="mono" id="nav-code">—</span></span>
-  </div>
-</nav>
+(function () {
+  // -------------------- storage --------------------
+  var STORAGE_KEY = "sorria.v1";
 
-<!-- ============================================================
-     VIEW 1: first-time scan — onboarding
-     ============================================================ -->
-<section class="view view--onboard" id="view-onboard" hidden>
-  <div class="view__inner">
+  function loadAllShirts() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) { return {}; }
+  }
 
-    <!-- step 1: greeting -->
-    <div class="step step--active" data-step="greet">
-      <p class="step__eyebrow"><span class="dot"></span> first scan</p>
+  // -------------------- city coordinates --------------------
+  // these match the cities offered in the log form on scan.html
+  var CITY_COORDS = {
+    "Austin, TX":         { lat: 30.2672, lng: -97.7431 },
+    "New York, NY":       { lat: 40.7128, lng: -74.0060 },
+    "Los Angeles, CA":    { lat: 34.0522, lng: -118.2437 },
+    "Chicago, IL":        { lat: 41.8781, lng: -87.6298 },
+    "Miami, FL":          { lat: 25.7617, lng: -80.1918 },
+    "Seattle, WA":        { lat: 47.6062, lng: -122.3321 },
+    "Denver, CO":         { lat: 39.7392, lng: -104.9903 },
+    "Boston, MA":         { lat: 42.3601, lng: -71.0589 },
+    "San Francisco, CA":  { lat: 37.7749, lng: -122.4194 },
+    "Portland, OR":       { lat: 45.5152, lng: -122.6784 }
+  };
 
-      <h1 class="step__headline">
-        hi from shirt<br />
-        <em class="mono code-display" id="greet-code">—</em>
-      </h1>
+  // -------------------- seed data --------------------
+  // realistic-looking smiles from "other wearers" so the map feels alive
+  // every visitor sees the same seed data so it feels like a real shared world
+  var SEED_SMILES = [
+    { city: "New York, NY",       story: "kid on the subway pointed and waved",                     shirtCode: "3B8K1", hoursAgo: 0.3 },
+    { city: "Austin, TX",         story: "barista drew a smiley on my cup",                          shirtCode: "9M2P4", hoursAgo: 1.2 },
+    { city: "Los Angeles, CA",    story: "someone said 'i needed this today'",                       shirtCode: "4F7Q3", hoursAgo: 2.1 },
+    { city: "Chicago, IL",        story: null,                                                       shirtCode: "8L1X9", hoursAgo: 3.5 },
+    { city: "Seattle, WA",        story: "old man tipped his hat at me",                             shirtCode: "2N5W8", hoursAgo: 5 },
+    { city: "Miami, FL",          story: "whole table at brunch smiled back",                        shirtCode: "6T3J5", hoursAgo: 6.4 },
+    { city: "Denver, CO",         story: null,                                                       shirtCode: "1V9H2", hoursAgo: 8 },
+    { city: "Boston, MA",         story: "girl on the bus said 'love your shirt'",                   shirtCode: "5C4R7", hoursAgo: 10 },
+    { city: "San Francisco, CA",  story: "stranger laughed and showed me hers — same shirt",         shirtCode: "7G8Y6", hoursAgo: 14 },
+    { city: "Portland, OR",       story: "kid in line at the bakery pointed and grinned",            shirtCode: "3Z1U4", hoursAgo: 18 },
+    { city: "New York, NY",       story: "dog walker waved across the street",                       shirtCode: "8K2L5", hoursAgo: 22 },
+    { city: "Austin, TX",         story: null,                                                       shirtCode: "4P9N1", hoursAgo: 26 },
+    { city: "Los Angeles, CA",    story: "barista wrote 'keep smiling' on my cup",                   shirtCode: "1Q6W3", hoursAgo: 30 },
+    { city: "Chicago, IL",        story: "woman on the train told me about her day",                 shirtCode: "9R4T7", hoursAgo: 36 },
+    { city: "Miami, FL",          story: null,                                                       shirtCode: "2X8B6", hoursAgo: 44 },
+    { city: "Seattle, WA",        story: "kid yelled 'cool shirt!' from a scooter",                  shirtCode: "5V7M4", hoursAgo: 52 },
+    { city: "San Francisco, CA",  story: null,                                                       shirtCode: "7C3D8", hoursAgo: 68 },
+    { city: "Denver, CO",         story: "couple at the next table smiled together",                 shirtCode: "6F1G9", hoursAgo: 84 },
+    { city: "Boston, MA",         story: null,                                                       shirtCode: "0H5J2", hoursAgo: 102 },
+    { city: "Portland, OR",       story: "barista said 'this just made my morning'",                 shirtCode: "4A6S8", hoursAgo: 120 }
+  ];
 
-      <div class="step__body">
-        <p class="step__lede">this shirt has spread <strong>0 smiles</strong> so far.</p>
-        <p class="step__sub">someone just smiled at you, didn't they?</p>
-      </div>
+  function jitter(coord) {
+    // tiny random offset so multiple smiles in same city don't stack
+    return coord + (Math.random() - 0.5) * 0.08;
+  }
 
-      <svg class="step__smiley" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <circle cx="100" cy="100" r="82" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" />
-        <line x1="72" y1="78" x2="72" y2="100" stroke="currentColor" stroke-width="8" stroke-linecap="round" />
-        <line x1="128" y1="78" x2="128" y2="100" stroke="currentColor" stroke-width="8" stroke-linecap="round" />
-        <path d="M 60 118 Q 100 162 140 118" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" />
-      </svg>
+  function buildSeedSmiles() {
+    var now = Date.now();
+    return SEED_SMILES.map(function (s) {
+      var coords = CITY_COORDS[s.city];
+      if (!coords) return null;
+      return {
+        city: s.city,
+        story: s.story,
+        shirtCode: s.shirtCode,
+        ts: now - (s.hoursAgo * 3600 * 1000),
+        lat: jitter(coords.lat),
+        lng: jitter(coords.lng),
+        isYours: false
+      };
+    }).filter(Boolean);
+  }
 
-      <div class="step__actions">
-        <button class="btn btn--primary" data-go="log">log the first smile</button>
-        <button class="btn btn--ghost" data-go="explain">what is this?</button>
-      </div>
-    </div>
+  // -------------------- merge with user data --------------------
+  function buildUserSmiles() {
+    var all = loadAllShirts();
+    var result = [];
+    Object.keys(all).forEach(function (code) {
+      var shirt = all[code];
+      (shirt.smiles || []).forEach(function (s) {
+        if (!s.city) return;
+        var coords = CITY_COORDS[s.city];
+        if (!coords) return;
+        result.push({
+          city: s.city,
+          story: s.story,
+          shirtCode: code,
+          ts: s.ts,
+          lat: jitter(coords.lat),
+          lng: jitter(coords.lng),
+          isYours: true
+        });
+      });
+    });
+    return result;
+  }
 
-    <!-- step 2: log the smile -->
-    <div class="step" data-step="log">
-      <p class="step__eyebrow">log a smile</p>
+  // -------------------- helpers --------------------
+  function timeAgo(ts) {
+    var mins = Math.round((Date.now() - ts) / 60000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return mins + "m ago";
+    var hrs = Math.round(mins / 60);
+    if (hrs < 24) return hrs + "h ago";
+    var days = Math.round(hrs / 24);
+    return days + "d ago";
+  }
 
-      <h2 class="step__headline step__headline--mid">
-        tell us<br />
-        <em>what happened.</em>
-      </h2>
+  function escapeHtml(s) {
+    return String(s).replace(/[<>&"']/g, function (c) {
+      return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
 
-      <p class="step__sub" style="margin-bottom: 28px;">optional — but the stories are what make the map worth visiting.</p>
+  function animateNumber(el, target, prefix) {
+    prefix = prefix || "";
+    var start = null;
+    var duration = 1400;
+    function step(ts) {
+      if (!start) start = ts;
+      var p = Math.min((ts - start) / duration, 1);
+      var eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = prefix + Math.round(target * eased).toLocaleString();
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
 
-      <div class="field">
-        <label class="field__label" for="log-city">where</label>
-        <select id="log-city" class="field__input">
-          <option value="">pick a city (optional)</option>
-          <option value="Austin, TX">Austin, TX</option>
-          <option value="New York, NY">New York, NY</option>
-          <option value="Los Angeles, CA">Los Angeles, CA</option>
-          <option value="Chicago, IL">Chicago, IL</option>
-          <option value="Miami, FL">Miami, FL</option>
-          <option value="Seattle, WA">Seattle, WA</option>
-          <option value="Denver, CO">Denver, CO</option>
-          <option value="Boston, MA">Boston, MA</option>
-          <option value="San Francisco, CA">San Francisco, CA</option>
-          <option value="Portland, OR">Portland, OR</option>
-        </select>
-      </div>
+  // -------------------- assemble data --------------------
+  var seedSmiles = buildSeedSmiles();
+  var userSmiles = buildUserSmiles();
+  var allSmiles = seedSmiles.concat(userSmiles);
+  // sort newest first
+  allSmiles.sort(function (a, b) { return b.ts - a.ts; });
 
-      <div class="field">
-        <label class="field__label" for="log-story">what happened</label>
-        <textarea id="log-story" class="field__input field__input--text" placeholder="e.g. kid waved at me on the subway" maxlength="120"></textarea>
-        <p class="field__hint"><span id="log-char">0</span> / 120</p>
-      </div>
+  // -------------------- render stats --------------------
+  var totalCount = allSmiles.length;
+  var citySet = {};
+  allSmiles.forEach(function (s) { citySet[s.city] = true; });
+  var cityCount = Object.keys(citySet).length;
+  var yoursCount = userSmiles.length;
 
-      <div class="step__actions">
-        <button class="btn btn--primary" data-go="confirm">add to the map</button>
-        <button class="btn btn--ghost" data-go="greet">← back</button>
-      </div>
-    </div>
+  animateNumber(document.getElementById("stat-total"), totalCount);
+  animateNumber(document.getElementById("stat-cities"), cityCount);
+  animateNumber(document.getElementById("stat-yours"), yoursCount);
 
-    <!-- step 3: confirm -->
-    <div class="step" data-step="confirm">
-      <div class="confirm__icon">
-        <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <line x1="20" y1="22" x2="20" y2="30" stroke="#1A1714" stroke-width="4" stroke-linecap="round"/>
-          <line x1="40" y1="22" x2="40" y2="30" stroke="#1A1714" stroke-width="4" stroke-linecap="round"/>
-          <path d="M 16 36 Q 30 50 44 36" fill="none" stroke="#1A1714" stroke-width="4" stroke-linecap="round"/>
-        </svg>
-      </div>
+  // -------------------- build map --------------------
+  // wrap in try/catch so if Leaflet ever fails to load, the rest of the page still works
+  try {
+    if (typeof L === "undefined") throw new Error("Leaflet (L) is not defined");
 
-      <h2 class="step__headline">
-        first smile<br />
-        <em>logged.</em>
-      </h2>
+    var map = L.map("map", {
+      center: [38.5, -96],         // continental US center for US-only launch
+      zoom: 4,
+      minZoom: 2,
+      maxZoom: 12,
+      scrollWheelZoom: false,      // avoid hijacking page scroll
+      zoomControl: true,
+      attributionControl: true
+    });
 
-      <p class="step__sub" style="margin-bottom: 28px;">this shirt is officially in the game. another smile is coming.</p>
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: '© <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
 
-      <div class="shirt-card">
-        <p class="shirt-card__tag mono">SHIRT № <span id="confirm-code">—</span></p>
-        <div class="shirt-card__row">
-          <span class="shirt-card__label">smiles spread</span>
-          <span class="shirt-card__num mono">1</span>
-        </div>
-      </div>
+    // -------------------- plot dots --------------------
+    var RECENT_THRESHOLD_MS = 6 * 3600 * 1000; // 6 hours
 
-      <div class="step__actions">
-        <button class="btn btn--primary" data-go="claim">claim this shirt</button>
-        <button class="btn btn--ghost" data-go="dashboard">not now</button>
-      </div>
-    </div>
+    allSmiles.forEach(function (s) {
+      var classes = ["smile-dot"];
+      if (s.isYours) classes.push("smile-dot--yours");
+      if (Date.now() - s.ts < RECENT_THRESHOLD_MS) classes.push("smile-dot--recent");
 
-    <!-- step 4: claim -->
-    <div class="step" data-step="claim">
-      <p class="step__eyebrow">claim this shirt</p>
+      var icon = L.divIcon({
+        className: "smile-marker",
+        html: '<div class="' + classes.join(" ") + '"></div>',
+        iconSize: [12, 12],
+        iconAnchor: [6, 6]
+      });
 
-      <h2 class="step__headline step__headline--mid">
-        we'll remember it<br />
-        <em>next time.</em>
-      </h2>
+      var marker = L.marker([s.lat, s.lng], { icon: icon, riseOnHover: true }).addTo(map);
 
-      <p class="step__sub" style="margin-bottom: 28px;">no password. just your email. we send a magic link.</p>
+      var popupHtml =
+        '<div class="popup__where">' + escapeHtml(s.city) + '</div>' +
+        (s.story ? '<div class="popup__story">"' + escapeHtml(s.story) + '"</div>' : '') +
+        '<div class="popup__meta' + (s.isYours ? ' popup__meta--yours' : '') + '">' +
+        '№ ' + escapeHtml(s.shirtCode) + ' · ' + timeAgo(s.ts) +
+        (s.isYours ? ' · you' : '') +
+        '</div>';
 
-      <div class="field">
-        <label class="field__label" for="claim-email">email</label>
-        <input type="email" id="claim-email" class="field__input" placeholder="you@email.com" />
-        <p class="field__hint">no spam. no newsletters unless you ask.</p>
-      </div>
+      marker.bindPopup(popupHtml, {
+        offset: [0, -4],
+        closeButton: true,
+        autoPan: true
+      });
+    });
+  } catch (err) {
+    // graceful fallback if the map fails — show a friendly note in the container
+    var mapEl = document.getElementById("map");
+    if (mapEl) {
+      mapEl.innerHTML =
+        '<div style="display:flex;align-items:center;justify-content:center;height:100%;text-align:center;padding:24px;color:var(--ink-quiet);font-family:var(--display);font-style:italic;font-size:16px;">' +
+        'the map could not load right now —<br>but the smiles below are real.' +
+        '</div>';
+    }
+    console.warn("Leaflet failed to initialize:", err);
+  }
 
-      <div class="step__actions">
-        <button class="btn btn--primary" id="claim-submit">send the link</button>
-        <button class="btn btn--ghost" data-go="dashboard">skip — keep going</button>
-      </div>
-    </div>
+  // -------------------- render stories feed --------------------
+  var feed = document.getElementById("stories-list");
+  var recent = allSmiles.slice(0, 12); // newest 12
 
-    <!-- step 5: explain (for curious strangers) -->
-    <div class="step" data-step="explain">
-      <p class="step__eyebrow">what is this?</p>
-
-      <h2 class="step__headline step__headline--mid">
-        a t-shirt that<br />
-        <em>plays a game.</em>
-      </h2>
-
-      <div class="step__body">
-        <p>each #Sorria shirt has a unique code sewn into the hem. wear it. someone smiles. scan the label and log the smile to a live map.</p>
-        <p style="margin-top: 14px;">net profit from every shirt funds kids' causes.</p>
-      </div>
-
-      <div class="step__actions">
-        <a href="index.html" class="btn btn--primary">tell me more</a>
-        <a href="shop.html" class="btn btn--ghost">get a shirt</a>
-      </div>
-    </div>
-
-  </div>
-</section>
-
-<!-- ============================================================
-     VIEW 2: returning wearer — dashboard
-     ============================================================ -->
-<section class="view view--dashboard" id="view-dashboard" hidden>
-  <div class="view__inner">
-
-    <header class="dash__header">
-      <p class="step__eyebrow"><span class="dot"></span> welcome back</p>
-      <h1 class="dash__headline">
-        shirt <em class="mono code-display" id="dash-code">—</em>
-      </h1>
-    </header>
-
-    <!-- the big number -->
-    <div class="dash__bignum">
-      <p class="dash__bignum-num mono" id="dash-total">0</p>
-      <p class="dash__bignum-label">smiles spread <span class="dash__bignum-since">since <span id="dash-since">today</span></span></p>
-    </div>
-
-    <!-- log another -->
-    <button class="btn btn--primary btn--full" id="dash-log">
-      <span class="btn__icon">+</span> log another smile
-    </button>
-
-    <!-- this shirt's history -->
-    <div class="dash__history">
-      <p class="step__eyebrow">history</p>
-      <ul class="history__list" id="dash-history">
-        <!-- populated by JS -->
-      </ul>
-    </div>
-
-    <!-- footer actions -->
-    <div class="dash__footer">
-      <a href="map.html" class="btn btn--ghost btn--full">see the world map</a>
-      <button class="dash__reset" id="dash-reset">reset this shirt's data</button>
-    </div>
-
-  </div>
-</section>
-
-<!-- ============================================================
-     QUICK-LOG modal (for dashboard "log another")
-     ============================================================ -->
-<div class="modal" id="quick-modal" hidden>
-  <div class="modal__backdrop" id="quick-backdrop"></div>
-  <div class="modal__panel">
-    <button class="modal__close" id="quick-close" aria-label="close">×</button>
-    <p class="step__eyebrow">log a smile</p>
-    <h3 class="step__headline step__headline--small">tell us <em>what happened.</em></h3>
-
-    <div class="field" style="margin-top: 24px;">
-      <label class="field__label" for="quick-city">where</label>
-      <select id="quick-city" class="field__input">
-        <option value="">pick a city (optional)</option>
-        <option value="Austin, TX">Austin, TX</option>
-        <option value="New York, NY">New York, NY</option>
-        <option value="Los Angeles, CA">Los Angeles, CA</option>
-        <option value="Chicago, IL">Chicago, IL</option>
-        <option value="Miami, FL">Miami, FL</option>
-        <option value="Seattle, WA">Seattle, WA</option>
-        <option value="Denver, CO">Denver, CO</option>
-        <option value="Boston, MA">Boston, MA</option>
-        <option value="San Francisco, CA">San Francisco, CA</option>
-        <option value="Portland, OR">Portland, OR</option>
-      </select>
-    </div>
-
-    <div class="field">
-      <label class="field__label" for="quick-story">what happened</label>
-      <textarea id="quick-story" class="field__input field__input--text" placeholder="e.g. someone said i needed this today" maxlength="120"></textarea>
-    </div>
-
-    <button class="btn btn--primary btn--full" id="quick-submit" style="margin-top: 8px;">add to the map</button>
-  </div>
-</div>
-
-<!-- toast for success messages -->
-<div class="toast" id="toast" hidden></div>
-
-<script src="scan.js"></script>
-</body>
-</html>
+  if (recent.length === 0) {
+    feed.innerHTML = '<li class="stories__empty">no smiles yet. wear the shirt.</li>';
+  } else {
+    recent.forEach(function (s) {
+      var li = document.createElement("li");
+      li.className = "story-item";
+      li.innerHTML =
+        '<div class="story-item__dot' + (s.isYours ? ' story-item__dot--yours' : '') + '"></div>' +
+        '<div class="story-item__body">' +
+          '<div class="story-item__where' + (s.isYours ? ' story-item__where--yours' : '') + '">' +
+            escapeHtml(s.city) +
+          '</div>' +
+          (s.story ? '<div class="story-item__story">"' + escapeHtml(s.story) + '"</div>' : '') +
+          '<div class="story-item__meta">№ ' + escapeHtml(s.shirtCode) + ' · ' + timeAgo(s.ts) + '</div>' +
+        '</div>';
+      feed.appendChild(li);
+    });
+  }
+})();

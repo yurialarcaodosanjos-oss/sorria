@@ -1,291 +1,90 @@
-/* ============================================================
-   #Sorria — scan.js
-   per-shirt logic: read code from URL, route to correct view,
-   persist smiles to localStorage, run the onboarding flow.
+# #Sorria — landing + scan + map
 
-   Storage shape (in localStorage under "sorria.v1"):
-   {
-     "ABC123": {
-       claimed: false,
-       email: null,
-       smiles: [
-         { city: "Austin, TX", story: "kid waved", ts: 1234567890 }
-       ]
-     },
-     ...
-   }
-   ============================================================ */
+A t-shirt that plays a game: spread smiles, log them on a map, fund kids' causes.
 
-(function () {
-  // -------------------- constants --------------------
-  var STORAGE_KEY = "sorria.v1";
-  var VALID_CODE = /^[A-Z0-9]{3,12}$/i;
+This release contains three working pages plus shared assets:
 
-  // -------------------- read code from URL --------------------
-  function getCode() {
-    // try pretty path first: /ABC123 or /SMILE-ABC123
-    var path = window.location.pathname.split("/").pop().replace(/\.html$/, "").replace(/^SMILE-/i, "");
-    if (path && VALID_CODE.test(path) && path !== "scan" && path !== "index") {
-      return path.toUpperCase();
-    }
-    // then query string: ?code=ABC123
-    var params = new URLSearchParams(window.location.search);
-    var qp = params.get("code");
-    if (qp && VALID_CODE.test(qp)) return qp.toUpperCase();
-    // then hash: #ABC123
-    var hash = window.location.hash.replace(/^#/, "");
-    if (hash && VALID_CODE.test(hash)) return hash.toUpperCase();
-    // fallback demo code
-    return "7K9X2";
-  }
+```
+sorria/
+├── index.html          ← landing page (curious-stranger flow)
+├── scan.html           ← per-shirt page: onboarding + wearer dashboard
+├── map.html            ← live atlas of all smiles
+├── shop.html           ← placeholder for the shop (next build)
+├── styles.css          ← shared styles
+├── scan.css            ← scan-page-only styles
+├── map.css             ← map-page-only styles
+├── script.js           ← landing page logic
+├── scan.js             ← scan page logic (per-shirt state, localStorage)
+├── map.js              ← map page logic (Leaflet, seed data, user merge)
+├── vendor/leaflet/     ← bundled Leaflet 1.9.4 (no CDN needed)
+└── README.md
+```
 
-  // -------------------- storage helpers --------------------
-  function loadAll() {
-    try {
-      var raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : {};
-    } catch (e) { return {}; }
-  }
+## What each page does
 
-  function saveAll(data) {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
-  }
+**`index.html`** — the public landing page. The first thing a curious stranger sees when they scan a friend's shirt. Headline, live stats, the shirt's own story, how-it-works, CTA. Reads the shirt code from the URL so the page personalizes itself.
 
-  function getShirt(code) {
-    var all = loadAll();
-    return all[code] || null;
-  }
+**`scan.html`** — each shirt's own page. Routes to one of two views depending on whether smiles have been logged for that code:
+- *First scan*: 5-step onboarding (greet → log → confirm → claim → done)
+- *Returning*: dashboard with big counter, history of all smiles, "log another" button
 
-  function setShirt(code, shirt) {
-    var all = loadAll();
-    all[code] = shirt;
-    saveAll(all);
-  }
+**`map.html`** — the live atlas. Real world map (Leaflet + OpenStreetMap) showing all logged smiles as dots. Orange dots are yours; muted brown are everyone else's. Click any dot to see the story behind it. Stories feed below the map shows the most recent 12.
 
-  function newShirt() {
-    return { claimed: false, email: null, smiles: [] };
-  }
+## How smile data flows
 
-  // -------------------- state --------------------
-  var CODE = getCode();
-  var shirt = getShirt(CODE);
-  var isFirstTime = !shirt || shirt.smiles.length === 0;
+Every smile logged on `scan.html` is stored in browser `localStorage` under the key `sorria.v1`. The map page reads from the same store and merges those user-logged smiles with hardcoded **seed data** (20 fake smiles from "other wearers") so the map looks alive from day one.
 
-  // populate code displays everywhere
-  document.querySelectorAll("#nav-code, #greet-code, #confirm-code, #dash-code, #story-code").forEach(function (el) {
-    if (el) el.textContent = CODE;
-  });
+This means:
+- A wearer logs a smile on their phone → they immediately see it on the map page (orange dot)
+- The seed data is the same for everyone, so the map never looks empty
+- Each device has its own user data — for "real" multi-device sync you'll add a backend (see below)
 
-  // -------------------- routing --------------------
-  function showView(name) {
-    document.getElementById("view-onboard").hidden = (name !== "onboard");
-    document.getElementById("view-dashboard").hidden = (name !== "dashboard");
-  }
+## How shirt codes work
 
-  function showStep(stepName) {
-    document.querySelectorAll(".step").forEach(function (el) {
-      el.classList.toggle("step--active", el.dataset.step === stepName);
-    });
-    // scroll to top on each step
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
+Each shirt has a unique code. URLs:
+- `scan.html?code=ABC123` — the shirt's own page (this is what the QR label encodes)
+- `index.html?code=ABC123` — landing page personalized for that shirt
+- `map.html` — same for everyone; user's own dots are highlighted
 
-  // initial route
-  if (isFirstTime) {
-    showView("onboard");
-    showStep("greet");
-  } else {
-    showView("dashboard");
-    renderDashboard();
-  }
+## Deploy to GitHub Pages
 
-  // -------------------- step navigation --------------------
-  document.querySelectorAll("[data-go]").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      var target = btn.dataset.go;
-      if (target === "log") {
-        showStep("log");
-      } else if (target === "confirm") {
-        commitFirstSmile();
-      } else if (target === "claim") {
-        showStep("claim");
-      } else if (target === "dashboard") {
-        showView("dashboard");
-        renderDashboard();
-      } else if (target === "greet") {
-        showStep("greet");
-      } else if (target === "explain") {
-        showStep("explain");
-      }
-    });
-  });
+1. Push all files (including the `vendor/` folder) to a public GitHub repo
+2. Settings → Pages → Source: Deploy from a branch → main / root → Save
+3. Wait 1–2 minutes
+4. Live at `https://<your-username>.github.io/<repo-name>/`
 
-  // -------------------- char counter --------------------
-  var logStory = document.getElementById("log-story");
-  var logChar = document.getElementById("log-char");
-  if (logStory && logChar) {
-    logStory.addEventListener("input", function () {
-      logChar.textContent = logStory.value.length;
-    });
-  }
+Leaflet is bundled locally so the map works even if a CDN fails. The map tiles themselves are loaded from OpenStreetMap (free, no API key) — they'll load fine from any normal browser with internet access.
 
-  // -------------------- commit first smile --------------------
-  function commitFirstSmile() {
-    var city = document.getElementById("log-city").value;
-    var story = document.getElementById("log-story").value.trim();
+## Local preview
 
-    if (!shirt) shirt = newShirt();
-    shirt.smiles.push({
-      city: city || null,
-      story: story || null,
-      ts: Date.now()
-    });
-    setShirt(CODE, shirt);
+```bash
+cd sorria
+python3 -m http.server 8000
+# then visit http://localhost:8000
+```
 
-    showStep("confirm");
-  }
+## URLs to test
 
-  // -------------------- claim email --------------------
-  var claimBtn = document.getElementById("claim-submit");
-  if (claimBtn) {
-    claimBtn.addEventListener("click", function () {
-      var email = document.getElementById("claim-email").value.trim();
-      if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-        toast("please enter a valid email");
-        return;
-      }
-      if (!shirt) shirt = newShirt();
-      shirt.claimed = true;
-      shirt.email = email;
-      setShirt(CODE, shirt);
-      claimBtn.textContent = "✓ check your email";
-      claimBtn.style.background = "var(--smile)";
-      claimBtn.style.color = "var(--ink)";
-      setTimeout(function () {
-        showView("dashboard");
-        renderDashboard();
-      }, 1200);
-    });
-  }
+- `/` — main landing page
+- `/?code=ABC` — landing personalized for code ABC
+- `/scan.html?code=NEW` — first-scan flow for a fresh code
+- `/scan.html?code=NEW` again — should now show dashboard with your logs
+- `/map.html` — see all the dots; log a smile on scan.html and refresh the map to see it appear
 
-  // -------------------- dashboard rendering --------------------
-  function renderDashboard() {
-    if (!shirt) { shirt = newShirt(); setShirt(CODE, shirt); }
+## What's next
 
-    // big number
-    document.getElementById("dash-total").textContent = shirt.smiles.length;
+In priority order:
 
-    // since
-    var oldest = shirt.smiles.length ? shirt.smiles[0].ts : Date.now();
-    document.getElementById("dash-since").textContent = formatSinceDate(oldest);
+1. **Real backend** (Supabase recommended) — swap localStorage for hosted DB so all devices share data. Most of the code is already organized for this — `loadAllShirts()` in `map.js` and the storage helpers in `scan.js` are the swap points.
+2. **Code generation** — admin page to mint new shirt codes as orders come in (with QR codes for printing onto labels).
+3. **A "share this moment" feature** after each log — generates an Instagram-ready image.
+4. **Shop with real checkout** — Stripe + your print-on-demand provider.
+5. **Magic-link email** for the claim flow.
 
-    // history
-    var ul = document.getElementById("dash-history");
-    ul.innerHTML = "";
-    if (shirt.smiles.length === 0) {
-      ul.innerHTML = '<li class="history__empty">no smiles yet — wear the shirt.</li>';
-      return;
-    }
-    // newest first
-    shirt.smiles.slice().reverse().forEach(function (s) {
-      var li = document.createElement("li");
-      li.className = "history__item";
-      li.innerHTML =
-        '<div class="history__dot"></div>' +
-        '<div class="history__body">' +
-          '<div class="history__where">' + escapeHtml(s.city || "somewhere") + '</div>' +
-          (s.story ? '<div class="history__story">"' + escapeHtml(s.story) + '"</div>' : '') +
-          '<div class="history__meta">' + timeAgo(s.ts) + '</div>' +
-        '</div>';
-      ul.appendChild(li);
-    });
-  }
+## Notes for whoever picks this up
 
-  // -------------------- quick-log modal --------------------
-  var modal = document.getElementById("quick-modal");
-  var dashLogBtn = document.getElementById("dash-log");
-  var quickClose = document.getElementById("quick-close");
-  var quickBackdrop = document.getElementById("quick-backdrop");
-  var quickSubmit = document.getElementById("quick-submit");
-
-  function openModal() {
-    modal.hidden = false;
-    document.getElementById("quick-story").value = "";
-    document.getElementById("quick-city").value = "";
-  }
-  function closeModal() { modal.hidden = true; }
-
-  if (dashLogBtn) dashLogBtn.addEventListener("click", openModal);
-  if (quickClose) quickClose.addEventListener("click", closeModal);
-  if (quickBackdrop) quickBackdrop.addEventListener("click", closeModal);
-
-  if (quickSubmit) {
-    quickSubmit.addEventListener("click", function () {
-      var city = document.getElementById("quick-city").value;
-      var story = document.getElementById("quick-story").value.trim();
-      shirt.smiles.push({
-        city: city || null,
-        story: story || null,
-        ts: Date.now()
-      });
-      setShirt(CODE, shirt);
-      closeModal();
-      toast("smile #" + shirt.smiles.length + " logged ✓");
-      renderDashboard();
-    });
-  }
-
-  // -------------------- reset --------------------
-  var resetBtn = document.getElementById("dash-reset");
-  if (resetBtn) {
-    resetBtn.addEventListener("click", function () {
-      var ok = confirm("Reset this shirt's data? All logged smiles for № " + CODE + " will be erased on this device.");
-      if (!ok) return;
-      var all = loadAll();
-      delete all[CODE];
-      saveAll(all);
-      shirt = null;
-      isFirstTime = true;
-      showView("onboard");
-      showStep("greet");
-    });
-  }
-
-  // -------------------- helpers --------------------
-  function timeAgo(ts) {
-    var mins = Math.round((Date.now() - ts) / 60000);
-    if (mins < 1) return "just now";
-    if (mins < 60) return mins + "m ago";
-    var hrs = Math.round(mins / 60);
-    if (hrs < 24) return hrs + "h ago";
-    var days = Math.round(hrs / 24);
-    if (days < 30) return days + "d ago";
-    var months = Math.round(days / 30);
-    return months + "mo ago";
-  }
-
-  function formatSinceDate(ts) {
-    var d = new Date(ts);
-    var now = new Date();
-    var sameDay = d.toDateString() === now.toDateString();
-    if (sameDay) return "today";
-    var opts = { month: "short", day: "numeric" };
-    if (d.getFullYear() !== now.getFullYear()) opts.year = "numeric";
-    return d.toLocaleDateString(undefined, opts);
-  }
-
-  function escapeHtml(s) {
-    return String(s).replace(/[<>&"']/g, function (c) {
-      return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&#39;" }[c];
-    });
-  }
-
-  var toastTimer;
-  function toast(msg) {
-    var el = document.getElementById("toast");
-    el.textContent = msg;
-    el.hidden = false;
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { el.hidden = true; }, 2400);
-  }
-})();
+- All visual styling lives in CSS variables at the top of `styles.css` — easy to rebrand
+- City coordinates are hardcoded in `map.js` — add new cities by extending `CITY_COORDS`
+- Seed data is at the top of `map.js` (look for `SEED_SMILES`) — edit the list to change what visitors see by default
+- Storage shape is documented at the top of `scan.js`
+- Map is mobile-first; scroll-wheel zoom is disabled to avoid hijacking page scroll on the way to the stories feed
