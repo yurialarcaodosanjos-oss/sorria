@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+<title>the map — #Sorria</title>
+<meta name="description" content="A live atlas of smiles spread across the world by #Sorria shirts." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
+<link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="map.css" />
+</head>
+<body>
+
+<nav class="nav">
+  <a href="index.html" class="nav__brand"><span class="brand-mark">#Sorria</span></a>
+  <div class="nav__meta">
+    <a href="index.html" class="nav__link">home</a>
+    <a href="shop.html" class="nav__link nav__link--cta">shop</a>
+  </div>
+</nav>
+
+<header class="map-hero">
+  <div class="map-hero__inner">
+    <p class="eyebrow"><span class="dot"></span> live atlas</p>
+    <h1 class="map-hero__headline">
+      every smile,<br />
+      <em>somewhere on earth.</em>
+    </h1>
+    <p class="map-hero__sub">each dot is a real moment, logged by a real wearer. zoom in. tap any of them.</p>
+
+    <div class="map-stats">
+      <div class="map-stat">
+        <span class="map-stat__num mono" id="stat-total">0</span>
+        <span class="map-stat__label">smiles spread</span>
+      </div>
+      <span class="map-stat__sep">·</span>
+      <div class="map-stat">
+        <span class="map-stat__num mono" id="stat-cities">0</span>
+        <span class="map-stat__label">cities</span>
+      </div>
+      <span class="map-stat__sep">·</span>
+      <div class="map-stat">
+        <span class="map-stat__num mono" id="stat-yours">0</span>
+        <span class="map-stat__label">yours</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="map-section">
+  <div id="map" role="application" aria-label="World map of logged smiles"></div>
+
+  <div class="map-legend" aria-hidden="true">
+    <div class="map-legend__row"><span class="map-legend__dot map-legend__dot--yours"></span> your shirts</div>
+    <div class="map-legend__row"><span class="map-legend__dot"></span> everyone else</div>
+  </div>
+</section>
+
+<section class="stories">
+  <div class="stories__inner">
+    <p class="section-eyebrow">recent stories</p>
+    <ul class="stories__list" id="stories-list"></ul>
+  </div>
+</section>
+
+<section class="cta">
+  <h2 class="cta__headline">add your dot.</h2>
+  <p class="cta__sub">get a shirt, wear it, watch the map grow.</p>
+  <div class="cta__buttons">
+    <a href="shop.html" class="btn btn--primary">get a shirt</a>
+    <a href="index.html" class="btn btn--ghost">how it works</a>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="footer__inner">
+    <p class="footer__tag">a smile is contagious. so is this.</p>
+    <p class="footer__meta mono">#Sorria · 2026 · all net profit donated</p>
+  </div>
+</footer>
+
+<script src="vendor/leaflet/leaflet.js"></script>
+<script src="map.js"></script>
+</body>
+</html>
