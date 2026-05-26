@@ -118,12 +118,12 @@
   position: absolute;
   top: 40px;
   right: -20px;
-  width: clamp(100px, 18vw, 160px);
-  height: clamp(100px, 18vw, 160px);
-  color: var(--ink);
-  opacity: 0.06;
+  width: clamp(120px, 22vw, 180px);
+  height: auto;
+  opacity: 0.08;
   z-index: -1;
   animation: smiley-tilt 1200ms cubic-bezier(0.2, 0.8, 0.2, 1) 200ms both;
+  pointer-events: none;
 }
 
 .step__actions {
@@ -221,11 +221,13 @@ select.field__input {
   justify-content: center;
   margin-bottom: 28px;
   animation: pop-in 600ms cubic-bezier(0.2, 1.4, 0.4, 1);
+  overflow: hidden;
 }
 
-.confirm__icon svg {
-  width: 40px;
-  height: 40px;
+.confirm__icon img {
+  width: 60%;
+  height: auto;
+  display: block;
 }
 
 /* ============================================================
@@ -504,7 +506,7 @@ select.field__input {
 
 @keyframes smiley-tilt {
   from { opacity: 0; transform: rotate(-15deg) scale(0.8); }
-  to { opacity: 0.06; transform: rotate(-8deg) scale(1); }
+  to { opacity: 0.08; transform: rotate(-8deg) scale(1); }
 }
 
 @keyframes fade-in {

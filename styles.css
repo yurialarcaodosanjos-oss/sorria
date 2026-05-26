@@ -3,6 +3,15 @@
    editorial minimalism, warm accent, mono for data
    ============================================================ */
 
+/* locally-vendored hand-drawn font — loads even when Google Fonts is unreachable */
+@font-face {
+  font-family: "Gochi Hand";
+  src: url("vendor/fonts/GochiHand-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* palette */
   --paper: #FAF8F3;
@@ -16,6 +25,7 @@
 
   /* type */
   --display: "Newsreader", "Iowan Old Style", Georgia, serif;
+  --hand: "Gochi Hand", "Comic Sans MS", cursive;
   --body: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
@@ -59,10 +69,11 @@ strong { font-weight: 600; }
 
 .nav__brand { display: flex; align-items: center; }
 .brand-mark {
-  font-family: var(--display);
-  font-size: 22px;
-  font-weight: 500;
-  letter-spacing: -0.02em;
+  font-family: var(--hand);
+  font-size: 30px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1;
 }
 
 .nav__meta {
@@ -151,19 +162,19 @@ strong { font-weight: 600; }
 .hero__smiley {
   position: absolute;
   top: -40px; right: -30px;
-  width: clamp(120px, 22vw, 200px);
-  height: clamp(120px, 22vw, 200px);
-  color: var(--ink);
-  opacity: 0.08;
+  width: clamp(140px, 26vw, 220px);
+  height: auto;
+  opacity: 0.12;
   z-index: -1;
   animation: smiley-in 1200ms cubic-bezier(0.2, 0.8, 0.2, 1) 300ms both;
   transform-origin: center;
+  pointer-events: none;
 }
 
 @media (max-width: 640px) {
   .hero__smiley {
     top: auto; right: -20px; bottom: -60px;
-    opacity: 0.06;
+    opacity: 0.08;
   }
 }
 
@@ -441,7 +452,7 @@ strong { font-weight: 600; }
 
 @keyframes smiley-in {
   from { opacity: 0; transform: rotate(-12deg) scale(0.8); }
-  to { opacity: 0.08; transform: rotate(-6deg) scale(1); }
+  to { opacity: 0.12; transform: rotate(-6deg) scale(1); }
 }
 
 @keyframes pulse {
