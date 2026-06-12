@@ -1,5 +1,5 @@
 /* ============================================================
-   #Sorria — landing page JS
+   #Smile — landing page JS
    reads shirt code from URL, animates the counters
    ============================================================ */
 

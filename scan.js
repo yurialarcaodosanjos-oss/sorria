@@ -1,75 +1,38 @@
 /* ============================================================
-   #Sorria — scan.js
+   #Smile — scan.js
    per-shirt logic: read code from URL, route to correct view,
-   persist smiles to localStorage, run the onboarding flow.
+   persist smiles via db.js (which uses Supabase or localStorage),
+   run the onboarding flow.
 
-   Storage shape (in localStorage under "sorria.v1"):
-   {
-     "ABC123": {
-       claimed: false,
-       email: null,
-       smiles: [
-         { city: "Austin, TX", story: "kid waved", ts: 1234567890 }
-       ]
-     },
-     ...
-   }
+   All storage now goes through window.db (see db.js):
+     await db.getShirt(code)         → shirt object or null
+     await db.addSmile(code, smile)  → { ok: true }
+     await db.claimShirt(code, email) → { ok: true }
+
+   db.isCloud tells you whether Supabase is on (true) or local-only (false).
    ============================================================ */
 
 (function () {
   // -------------------- constants --------------------
-  var STORAGE_KEY = "sorria.v1";
   var VALID_CODE = /^[A-Z0-9]{3,12}$/i;
 
   // -------------------- read code from URL --------------------
   function getCode() {
-    // try pretty path first: /ABC123 or /SMILE-ABC123
     var path = window.location.pathname.split("/").pop().replace(/\.html$/, "").replace(/^SMILE-/i, "");
     if (path && VALID_CODE.test(path) && path !== "scan" && path !== "index") {
       return path.toUpperCase();
     }
-    // then query string: ?code=ABC123
     var params = new URLSearchParams(window.location.search);
     var qp = params.get("code");
     if (qp && VALID_CODE.test(qp)) return qp.toUpperCase();
-    // then hash: #ABC123
     var hash = window.location.hash.replace(/^#/, "");
     if (hash && VALID_CODE.test(hash)) return hash.toUpperCase();
-    // fallback demo code
-    return "7K9X2";
-  }
-
-  // -------------------- storage helpers --------------------
-  function loadAll() {
-    try {
-      var raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : {};
-    } catch (e) { return {}; }
-  }
-
-  function saveAll(data) {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
-  }
-
-  function getShirt(code) {
-    var all = loadAll();
-    return all[code] || null;
-  }
-
-  function setShirt(code, shirt) {
-    var all = loadAll();
-    all[code] = shirt;
-    saveAll(all);
-  }
-
-  function newShirt() {
-    return { claimed: false, email: null, smiles: [] };
+    return "DEMO1";
   }
 
   // -------------------- state --------------------
   var CODE = getCode();
-  var shirt = getShirt(CODE);
-  var isFirstTime = !shirt || shirt.smiles.length === 0;
+  var shirt = null; // populated by initialFetch()
 
   // populate code displays everywhere
   document.querySelectorAll("#nav-code, #greet-code, #confirm-code, #dash-code, #story-code").forEach(function (el) {
@@ -86,17 +49,22 @@
     document.querySelectorAll(".step").forEach(function (el) {
       el.classList.toggle("step--active", el.dataset.step === stepName);
     });
-    // scroll to top on each step
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  // initial route
-  if (isFirstTime) {
-    showView("onboard");
-    showStep("greet");
-  } else {
-    showView("dashboard");
-    renderDashboard();
+  // -------------------- initial load: fetch shirt, route accordingly --------------------
+  function initialFetch() {
+    return window.db.getShirt(CODE).then(function (s) {
+      shirt = s || { code: CODE, claimed: false, email: null, smiles: [] };
+      var isFirstTime = !shirt.smiles || shirt.smiles.length === 0;
+      if (isFirstTime) {
+        showView("onboard");
+        showStep("greet");
+      } else {
+        showView("dashboard");
+        renderDashboard();
+      }
+    });
   }
 
   // -------------------- step navigation --------------------
@@ -133,16 +101,26 @@
   function commitFirstSmile() {
     var city = document.getElementById("log-city").value;
     var story = document.getElementById("log-story").value.trim();
+    var btn = document.querySelector('.step--active button[data-go="confirm"]');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "saving…";
+    }
 
-    if (!shirt) shirt = newShirt();
-    shirt.smiles.push({
-      city: city || null,
-      story: story || null,
-      ts: Date.now()
+    var smile = { city: city || null, story: story || null, ts: Date.now() };
+    window.db.addSmile(CODE, smile).then(function (res) {
+      if (!res.ok && res.error) {
+        toast("couldn't save — " + res.error);
+        if (btn) { btn.disabled = false; btn.textContent = "add to the map"; }
+        return;
+      }
+      shirt.smiles.push(smile);
+      showStep("confirm");
+    }).catch(function (err) {
+      console.error("addSmile failed:", err);
+      toast("couldn't save right now — try again");
+      if (btn) { btn.disabled = false; btn.textContent = "add to the map"; }
     });
-    setShirt(CODE, shirt);
-
-    showStep("confirm");
   }
 
   // -------------------- claim email --------------------
@@ -154,32 +132,40 @@
         toast("please enter a valid email");
         return;
       }
-      if (!shirt) shirt = newShirt();
-      shirt.claimed = true;
-      shirt.email = email;
-      setShirt(CODE, shirt);
-      claimBtn.textContent = "✓ check your email";
-      claimBtn.style.background = "var(--smile)";
-      claimBtn.style.color = "var(--ink)";
-      setTimeout(function () {
-        showView("dashboard");
-        renderDashboard();
-      }, 1200);
+      claimBtn.disabled = true;
+      claimBtn.textContent = "saving…";
+
+      window.db.claimShirt(CODE, email).then(function (res) {
+        if (!res.ok) {
+          toast("couldn't save — try again");
+          claimBtn.disabled = false;
+          claimBtn.textContent = "send the link";
+          return;
+        }
+        shirt.claimed = true;
+        shirt.email = email;
+        claimBtn.textContent = "✓ saved";
+        claimBtn.style.background = "var(--smile)";
+        claimBtn.style.color = "var(--ink)";
+        setTimeout(function () {
+          showView("dashboard");
+          renderDashboard();
+        }, 1100);
+      });
     });
   }
 
   // -------------------- dashboard rendering --------------------
   function renderDashboard() {
-    if (!shirt) { shirt = newShirt(); setShirt(CODE, shirt); }
+    if (!shirt) return;
 
-    // big number
     document.getElementById("dash-total").textContent = shirt.smiles.length;
 
-    // since
-    var oldest = shirt.smiles.length ? shirt.smiles[0].ts : Date.now();
+    // figure out "since" date — oldest smile is the start
+    var sorted = shirt.smiles.slice().sort(function (a, b) { return a.ts - b.ts; });
+    var oldest = sorted.length ? sorted[0].ts : Date.now();
     document.getElementById("dash-since").textContent = formatSinceDate(oldest);
 
-    // history
     var ul = document.getElementById("dash-history");
     ul.innerHTML = "";
     if (shirt.smiles.length === 0) {
@@ -187,7 +173,8 @@
       return;
     }
     // newest first
-    shirt.smiles.slice().reverse().forEach(function (s) {
+    var newestFirst = shirt.smiles.slice().sort(function (a, b) { return b.ts - a.ts; });
+    newestFirst.forEach(function (s) {
       var li = document.createElement("li");
       li.className = "history__item";
       li.innerHTML =
@@ -223,15 +210,21 @@
     quickSubmit.addEventListener("click", function () {
       var city = document.getElementById("quick-city").value;
       var story = document.getElementById("quick-story").value.trim();
-      shirt.smiles.push({
-        city: city || null,
-        story: story || null,
-        ts: Date.now()
+      var smile = { city: city || null, story: story || null, ts: Date.now() };
+      quickSubmit.disabled = true;
+      quickSubmit.textContent = "saving…";
+      window.db.addSmile(CODE, smile).then(function (res) {
+        if (!res.ok && res.error) {
+          toast("couldn't save — " + res.error);
+        } else {
+          shirt.smiles.push(smile);
+          toast("smile #" + shirt.smiles.length + " logged ✓");
+          renderDashboard();
+          closeModal();
+        }
+        quickSubmit.disabled = false;
+        quickSubmit.textContent = "add to the map";
       });
-      setShirt(CODE, shirt);
-      closeModal();
-      toast("smile #" + shirt.smiles.length + " logged ✓");
-      renderDashboard();
     });
   }
 
@@ -239,15 +232,16 @@
   var resetBtn = document.getElementById("dash-reset");
   if (resetBtn) {
     resetBtn.addEventListener("click", function () {
-      var ok = confirm("Reset this shirt's data? All logged smiles for № " + CODE + " will be erased on this device.");
+      var msg = window.db.isCloud
+        ? "Reset this view? Smiles will stay in the database; this just clears local view."
+        : "Reset this shirt's data? All logged smiles for № " + CODE + " will be erased on this device.";
+      var ok = confirm(msg);
       if (!ok) return;
-      var all = loadAll();
-      delete all[CODE];
-      saveAll(all);
-      shirt = null;
-      isFirstTime = true;
-      showView("onboard");
-      showStep("greet");
+      window.db.resetShirt(CODE).then(function () {
+        shirt = { code: CODE, claimed: false, email: null, smiles: [] };
+        showView("onboard");
+        showStep("greet");
+      });
     });
   }
 
@@ -288,4 +282,7 @@
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function () { el.hidden = true; }, 2400);
   }
+
+  // -------------------- kick off --------------------
+  initialFetch();
 })();
