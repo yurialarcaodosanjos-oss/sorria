@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-<title>#Sorria — scan a smile</title>
-<meta name="description" content="Log a smile to your #Sorria shirt's map." />
+<title>#Smile — scan a smile</title>
+<meta name="description" content="Log a smile to your #Smile shirt's map." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Gochi+Hand&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -15,7 +15,7 @@
 
 <!-- minimal nav -->
 <nav class="nav">
-  <a href="index.html" class="nav__brand"><span class="brand-mark">#Sorria</span></a>
+  <a href="index.html" class="nav__brand"><span class="brand-mark">#Smile</span></a>
   <div class="nav__meta">
     <span class="nav__via">shirt № <span class="mono" id="nav-code">—</span></span>
   </div>
@@ -149,7 +149,7 @@
       </h2>
 
       <div class="step__body">
-        <p>each #Sorria shirt has a unique code sewn into the hem. wear it. someone smiles. scan the label and log the smile to a live map.</p>
+        <p>each #Smile shirt has a unique code sewn into the hem. wear it. someone smiles. scan the label and log the smile to a live map.</p>
         <p style="margin-top: 14px;">net profit from every shirt funds kids' causes.</p>
       </div>
 
@@ -242,6 +242,9 @@
 <!-- toast for success messages -->
 <div class="toast" id="toast" hidden></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="db.js"></script>
 <script src="scan.js"></script>
 </body>
 </html>

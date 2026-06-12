@@ -1,20 +1,10 @@
 /* ============================================================
-   #Sorria — map.js
+   #Smile — map.js
    loads the world map, plots all smiles (seeded + user-logged),
    renders the recent-stories feed.
    ============================================================ */
 
 (function () {
-  // -------------------- storage --------------------
-  var STORAGE_KEY = "sorria.v1";
-
-  function loadAllShirts() {
-    try {
-      var raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : {};
-    } catch (e) { return {}; }
-  }
-
   // -------------------- city coordinates --------------------
   // these match the cities offered in the log form on scan.html
   var CITY_COORDS = {
@@ -78,28 +68,32 @@
     }).filter(Boolean);
   }
 
-  // -------------------- merge with user data --------------------
-  function buildUserSmiles() {
-    var all = loadAllShirts();
-    var result = [];
-    Object.keys(all).forEach(function (code) {
-      var shirt = all[code];
-      (shirt.smiles || []).forEach(function (s) {
+  // -------------------- map of user smiles via db API --------------------
+  // Returns a Promise that resolves to user-logged smiles for the map.
+  // Goes through window.db which routes to either Supabase or localStorage.
+  function buildUserSmilesAsync() {
+    if (!window.db) return Promise.resolve([]);
+    return window.db.getAllSmiles().then(function (rows) {
+      var out = [];
+      rows.forEach(function (s) {
         if (!s.city) return;
         var coords = CITY_COORDS[s.city];
         if (!coords) return;
-        result.push({
+        out.push({
           city: s.city,
           story: s.story,
-          shirtCode: code,
+          shirtCode: s.code,
           ts: s.ts,
           lat: jitter(coords.lat),
           lng: jitter(coords.lng),
-          isYours: true
+          isYours: !!s.isYours
         });
       });
+      return out;
+    }).catch(function (err) {
+      console.error("buildUserSmilesAsync failed:", err);
+      return [];
     });
-    return result;
   }
 
   // -------------------- helpers --------------------
@@ -133,107 +127,109 @@
     requestAnimationFrame(step);
   }
 
-  // -------------------- assemble data --------------------
+  // -------------------- assemble data and render --------------------
   var seedSmiles = buildSeedSmiles();
-  var userSmiles = buildUserSmiles();
-  var allSmiles = seedSmiles.concat(userSmiles);
-  // sort newest first
-  allSmiles.sort(function (a, b) { return b.ts - a.ts; });
 
-  // -------------------- render stats --------------------
-  var totalCount = allSmiles.length;
-  var citySet = {};
-  allSmiles.forEach(function (s) { citySet[s.city] = true; });
-  var cityCount = Object.keys(citySet).length;
-  var yoursCount = userSmiles.length;
+  buildUserSmilesAsync().then(function (userSmiles) {
+    var allSmiles = seedSmiles.concat(userSmiles);
+    // sort newest first
+    allSmiles.sort(function (a, b) { return b.ts - a.ts; });
 
-  animateNumber(document.getElementById("stat-total"), totalCount);
-  animateNumber(document.getElementById("stat-cities"), cityCount);
-  animateNumber(document.getElementById("stat-yours"), yoursCount);
+    // -------------------- render stats --------------------
+    var totalCount = allSmiles.length;
+    var citySet = {};
+    allSmiles.forEach(function (s) { citySet[s.city] = true; });
+    var cityCount = Object.keys(citySet).length;
+    var yoursCount = userSmiles.filter(function (s) { return s.isYours; }).length;
 
-  // -------------------- build map --------------------
-  // wrap in try/catch so if Leaflet ever fails to load, the rest of the page still works
-  try {
-    if (typeof L === "undefined") throw new Error("Leaflet (L) is not defined");
+    animateNumber(document.getElementById("stat-total"), totalCount);
+    animateNumber(document.getElementById("stat-cities"), cityCount);
+    animateNumber(document.getElementById("stat-yours"), yoursCount);
 
-    var map = L.map("map", {
-      center: [38.5, -96],         // continental US center for US-only launch
-      zoom: 4,
-      minZoom: 2,
-      maxZoom: 12,
-      scrollWheelZoom: false,      // avoid hijacking page scroll
-      zoomControl: true,
-      attributionControl: true
-    });
+    // -------------------- build map --------------------
+    // wrap in try/catch so if Leaflet ever fails to load, the rest of the page still works
+    try {
+      if (typeof L === "undefined") throw new Error("Leaflet (L) is not defined");
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      attribution: '© <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>'
-    }).addTo(map);
-
-    // -------------------- plot dots --------------------
-    var RECENT_THRESHOLD_MS = 6 * 3600 * 1000; // 6 hours
-
-    allSmiles.forEach(function (s) {
-      var classes = ["smile-dot"];
-      if (s.isYours) classes.push("smile-dot--yours");
-      if (Date.now() - s.ts < RECENT_THRESHOLD_MS) classes.push("smile-dot--recent");
-
-      var icon = L.divIcon({
-        className: "smile-marker",
-        html: '<div class="' + classes.join(" ") + '"></div>',
-        iconSize: [12, 12],
-        iconAnchor: [6, 6]
+      var map = L.map("map", {
+        center: [38.5, -96],         // continental US center for US-only launch
+        zoom: 4,
+        minZoom: 2,
+        maxZoom: 12,
+        scrollWheelZoom: false,      // avoid hijacking page scroll
+        zoomControl: true,
+        attributionControl: true
       });
 
-      var marker = L.marker([s.lat, s.lng], { icon: icon, riseOnHover: true }).addTo(map);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: '© <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>'
+      }).addTo(map);
 
-      var popupHtml =
-        '<div class="popup__where">' + escapeHtml(s.city) + '</div>' +
-        (s.story ? '<div class="popup__story">"' + escapeHtml(s.story) + '"</div>' : '') +
-        '<div class="popup__meta' + (s.isYours ? ' popup__meta--yours' : '') + '">' +
-        '№ ' + escapeHtml(s.shirtCode) + ' · ' + timeAgo(s.ts) +
-        (s.isYours ? ' · you' : '') +
-        '</div>';
+      // -------------------- plot dots --------------------
+      var RECENT_THRESHOLD_MS = 6 * 3600 * 1000; // 6 hours
 
-      marker.bindPopup(popupHtml, {
-        offset: [0, -4],
-        closeButton: true,
-        autoPan: true
+      allSmiles.forEach(function (s) {
+        var classes = ["smile-dot"];
+        if (s.isYours) classes.push("smile-dot--yours");
+        if (Date.now() - s.ts < RECENT_THRESHOLD_MS) classes.push("smile-dot--recent");
+
+        var icon = L.divIcon({
+          className: "smile-marker",
+          html: '<div class="' + classes.join(" ") + '"></div>',
+          iconSize: [12, 12],
+          iconAnchor: [6, 6]
+        });
+
+        var marker = L.marker([s.lat, s.lng], { icon: icon, riseOnHover: true }).addTo(map);
+
+        var popupHtml =
+          '<div class="popup__where">' + escapeHtml(s.city) + '</div>' +
+          (s.story ? '<div class="popup__story">"' + escapeHtml(s.story) + '"</div>' : '') +
+          '<div class="popup__meta' + (s.isYours ? ' popup__meta--yours' : '') + '">' +
+          '№ ' + escapeHtml(s.shirtCode) + ' · ' + timeAgo(s.ts) +
+          (s.isYours ? ' · you' : '') +
+          '</div>';
+
+        marker.bindPopup(popupHtml, {
+          offset: [0, -4],
+          closeButton: true,
+          autoPan: true
+        });
       });
-    });
-  } catch (err) {
-    // graceful fallback if the map fails — show a friendly note in the container
-    var mapEl = document.getElementById("map");
-    if (mapEl) {
-      mapEl.innerHTML =
-        '<div style="display:flex;align-items:center;justify-content:center;height:100%;text-align:center;padding:24px;color:var(--ink-quiet);font-family:var(--display);font-style:italic;font-size:16px;">' +
-        'the map could not load right now —<br>but the smiles below are real.' +
-        '</div>';
+    } catch (err) {
+      // graceful fallback if the map fails — show a friendly note in the container
+      var mapEl = document.getElementById("map");
+      if (mapEl) {
+        mapEl.innerHTML =
+          '<div style="display:flex;align-items:center;justify-content:center;height:100%;text-align:center;padding:24px;color:var(--ink-quiet);font-family:var(--display);font-style:italic;font-size:16px;">' +
+          'the map could not load right now —<br>but the smiles below are real.' +
+          '</div>';
+      }
+      console.warn("Leaflet failed to initialize:", err);
     }
-    console.warn("Leaflet failed to initialize:", err);
-  }
 
-  // -------------------- render stories feed --------------------
-  var feed = document.getElementById("stories-list");
-  var recent = allSmiles.slice(0, 12); // newest 12
+    // -------------------- render stories feed --------------------
+    var feed = document.getElementById("stories-list");
+    var recent = allSmiles.slice(0, 12); // newest 12
 
-  if (recent.length === 0) {
-    feed.innerHTML = '<li class="stories__empty">no smiles yet. wear the shirt.</li>';
-  } else {
-    recent.forEach(function (s) {
-      var li = document.createElement("li");
-      li.className = "story-item";
-      li.innerHTML =
-        '<div class="story-item__dot' + (s.isYours ? ' story-item__dot--yours' : '') + '"></div>' +
-        '<div class="story-item__body">' +
-          '<div class="story-item__where' + (s.isYours ? ' story-item__where--yours' : '') + '">' +
-            escapeHtml(s.city) +
-          '</div>' +
-          (s.story ? '<div class="story-item__story">"' + escapeHtml(s.story) + '"</div>' : '') +
-          '<div class="story-item__meta">№ ' + escapeHtml(s.shirtCode) + ' · ' + timeAgo(s.ts) + '</div>' +
-        '</div>';
-      feed.appendChild(li);
-    });
-  }
+    if (recent.length === 0) {
+      feed.innerHTML = '<li class="stories__empty">no smiles yet. wear the shirt.</li>';
+    } else {
+      recent.forEach(function (s) {
+        var li = document.createElement("li");
+        li.className = "story-item";
+        li.innerHTML =
+          '<div class="story-item__dot' + (s.isYours ? ' story-item__dot--yours' : '') + '"></div>' +
+          '<div class="story-item__body">' +
+            '<div class="story-item__where' + (s.isYours ? ' story-item__where--yours' : '') + '">' +
+              escapeHtml(s.city) +
+            '</div>' +
+            (s.story ? '<div class="story-item__story">"' + escapeHtml(s.story) + '"</div>' : '') +
+            '<div class="story-item__meta">№ ' + escapeHtml(s.shirtCode) + ' · ' + timeAgo(s.ts) + '</div>' +
+          '</div>';
+        feed.appendChild(li);
+      });
+    }
+  });
 })();
