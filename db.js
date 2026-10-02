@@ -1,29 +1,13 @@
 /* ============================================================
    #Smile — db.js
    Database wrapper for shirts and smiles.
-   
-   If Supabase is configured (config.js has URL + key), uses the
-   real database. Otherwise falls back to localStorage so the site
-   keeps working during setup.
-   
-   API:
-     await db.getShirt(code)         → { code, smiles: [...] } | null
-     await db.addSmile(code, smile)  → { ok: true }
-     await db.claimShirt(code, email) → { ok: true }
-     await db.getAllSmiles()         → [ { code, city, story, ts, isYours }, ... ]
-     db.isCloud                       → boolean (true if Supabase is on)
+   Routes to Supabase when configured, localStorage otherwise.
    ============================================================ */
 
 (function () {
   var cfg = window.SMILE_CONFIG || {};
   var hasSupabase = !!(cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY);
 
-  // ============================================================
-  // shared helpers
-  // ============================================================
-
-  // Persistent anonymous visitor ID so we can show "your smiles"
-  // on the map without requiring sign-in
   function getVisitorId() {
     try {
       var id = localStorage.getItem("smile.visitor_id");
@@ -37,12 +21,9 @@
     }
   }
 
-  // ============================================================
-  // LOCAL fallback (the old localStorage behavior)
-  // ============================================================
-
+  // ---------- LOCAL fallback ----------
   var local = (function () {
-    var KEY = "sorria.v1"; // keep old key so existing test data survives
+    var KEY = "sorria.v1";
 
     function loadAll() {
       try {
@@ -92,7 +73,6 @@
 
       getAllSmiles: function () {
         var all = loadAll();
-        var visitor = getVisitorId();
         var out = [];
         Object.keys(all).forEach(function (code) {
           (all[code].smiles || []).forEach(function (s) {
@@ -101,7 +81,7 @@
               city: s.city,
               story: s.story,
               ts: s.ts,
-              isYours: (s.visitor_id === visitor) || true // local data = always "yours"
+              isYours: true
             });
           });
         });
@@ -117,10 +97,7 @@
     };
   })();
 
-  // ============================================================
-  // CLOUD (Supabase) implementation
-  // ============================================================
-
+  // ---------- CLOUD (Supabase) ----------
   var cloud = null;
 
   function initCloud() {
@@ -129,7 +106,6 @@
 
     return {
       getShirt: function (code) {
-        // get shirt row + all its smiles in two parallel queries
         return Promise.all([
           client.from("shirts").select("*").eq("code", code).maybeSingle(),
           client.from("smiles").select("*").eq("shirt_code", code).order("created_at", { ascending: false })
@@ -137,9 +113,6 @@
           var shirtRes = results[0];
           var smilesRes = results[1];
 
-          if (shirtRes.error) {
-            console.error("getShirt shirt error:", shirtRes.error);
-          }
           if (smilesRes.error) {
             console.error("getShirt smiles error:", smilesRes.error);
             return null;
@@ -155,8 +128,6 @@
             };
           });
 
-          // if there's no shirt row but there are smiles, treat as a valid shirt
-          // (or if neither, still return a shape so the UI can show "first scan")
           return {
             code: code,
             claimed: shirt ? !!shirt.claimed_email : false,
@@ -170,7 +141,6 @@
       },
 
       addSmile: function (code, smile) {
-        // ensure shirt row exists (upsert), then insert smile
         return client.from("shirts")
           .upsert({ code: code }, { onConflict: "code" })
           .then(function () {
@@ -225,15 +195,12 @@
           });
       },
 
-      resetShirt: function (code) {
-        // for safety, only delete from local; don't expose a cloud-delete from client
-        // (admin can delete via Supabase dashboard if needed)
+      resetShirt: function () {
         return Promise.resolve({ ok: true, note: "cloud data preserved; reload to re-fetch" });
       }
     };
   }
 
-  // pick implementation
   cloud = initCloud();
   var impl = cloud || local;
 
@@ -247,7 +214,6 @@
     visitorId: getVisitorId()
   };
 
-  // little debug breadcrumb in the console
   if (cloud) {
     console.log("%c#Smile · cloud DB connected", "color: #C77E10; font-weight: 500;");
   } else {

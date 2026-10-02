@@ -1,22 +1,10 @@
 /* ============================================================
-   #Smile — scan.js
-   per-shirt logic: read code from URL, route to correct view,
-   persist smiles via db.js (which uses Supabase or localStorage),
-   run the onboarding flow.
-
-   All storage now goes through window.db (see db.js):
-     await db.getShirt(code)         → shirt object or null
-     await db.addSmile(code, smile)  → { ok: true }
-     await db.claimShirt(code, email) → { ok: true }
-
-   db.isCloud tells you whether Supabase is on (true) or local-only (false).
+   #Smile — scan.js (uses db wrapper)
    ============================================================ */
 
 (function () {
-  // -------------------- constants --------------------
   var VALID_CODE = /^[A-Z0-9]{3,12}$/i;
 
-  // -------------------- read code from URL --------------------
   function getCode() {
     var path = window.location.pathname.split("/").pop().replace(/\.html$/, "").replace(/^SMILE-/i, "");
     if (path && VALID_CODE.test(path) && path !== "scan" && path !== "index") {
@@ -30,16 +18,13 @@
     return "DEMO1";
   }
 
-  // -------------------- state --------------------
   var CODE = getCode();
-  var shirt = null; // populated by initialFetch()
+  var shirt = null;
 
-  // populate code displays everywhere
   document.querySelectorAll("#nav-code, #greet-code, #confirm-code, #dash-code, #story-code").forEach(function (el) {
     if (el) el.textContent = CODE;
   });
 
-  // -------------------- routing --------------------
   function showView(name) {
     document.getElementById("view-onboard").hidden = (name !== "onboard");
     document.getElementById("view-dashboard").hidden = (name !== "dashboard");
@@ -52,7 +37,6 @@
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  // -------------------- initial load: fetch shirt, route accordingly --------------------
   function initialFetch() {
     return window.db.getShirt(CODE).then(function (s) {
       shirt = s || { code: CODE, claimed: false, email: null, smiles: [] };
@@ -67,28 +51,18 @@
     });
   }
 
-  // -------------------- step navigation --------------------
   document.querySelectorAll("[data-go]").forEach(function (btn) {
     btn.addEventListener("click", function () {
       var target = btn.dataset.go;
-      if (target === "log") {
-        showStep("log");
-      } else if (target === "confirm") {
-        commitFirstSmile();
-      } else if (target === "claim") {
-        showStep("claim");
-      } else if (target === "dashboard") {
-        showView("dashboard");
-        renderDashboard();
-      } else if (target === "greet") {
-        showStep("greet");
-      } else if (target === "explain") {
-        showStep("explain");
-      }
+      if (target === "log") showStep("log");
+      else if (target === "confirm") commitFirstSmile();
+      else if (target === "claim") showStep("claim");
+      else if (target === "dashboard") { showView("dashboard"); renderDashboard(); }
+      else if (target === "greet") showStep("greet");
+      else if (target === "explain") showStep("explain");
     });
   });
 
-  // -------------------- char counter --------------------
   var logStory = document.getElementById("log-story");
   var logChar = document.getElementById("log-char");
   if (logStory && logChar) {
@@ -97,9 +71,8 @@
     });
   }
 
-  // -------------------- commit first smile --------------------
   function commitFirstSmile() {
-    var city = document.getElementById("log-city").value;
+    var city = document.getElementById("log-city").value.trim();
     var story = document.getElementById("log-story").value.trim();
     var btn = document.querySelector('.step--active button[data-go="confirm"]');
     if (btn) {
@@ -123,7 +96,6 @@
     });
   }
 
-  // -------------------- claim email --------------------
   var claimBtn = document.getElementById("claim-submit");
   if (claimBtn) {
     claimBtn.addEventListener("click", function () {
@@ -155,13 +127,10 @@
     });
   }
 
-  // -------------------- dashboard rendering --------------------
   function renderDashboard() {
     if (!shirt) return;
-
     document.getElementById("dash-total").textContent = shirt.smiles.length;
 
-    // figure out "since" date — oldest smile is the start
     var sorted = shirt.smiles.slice().sort(function (a, b) { return a.ts - b.ts; });
     var oldest = sorted.length ? sorted[0].ts : Date.now();
     document.getElementById("dash-since").textContent = formatSinceDate(oldest);
@@ -172,7 +141,6 @@
       ul.innerHTML = '<li class="history__empty">no smiles yet — wear the shirt.</li>';
       return;
     }
-    // newest first
     var newestFirst = shirt.smiles.slice().sort(function (a, b) { return b.ts - a.ts; });
     newestFirst.forEach(function (s) {
       var li = document.createElement("li");
@@ -188,7 +156,6 @@
     });
   }
 
-  // -------------------- quick-log modal --------------------
   var modal = document.getElementById("quick-modal");
   var dashLogBtn = document.getElementById("dash-log");
   var quickClose = document.getElementById("quick-close");
@@ -208,7 +175,7 @@
 
   if (quickSubmit) {
     quickSubmit.addEventListener("click", function () {
-      var city = document.getElementById("quick-city").value;
+      var city = document.getElementById("quick-city").value.trim();
       var story = document.getElementById("quick-story").value.trim();
       var smile = { city: city || null, story: story || null, ts: Date.now() };
       quickSubmit.disabled = true;
@@ -228,7 +195,6 @@
     });
   }
 
-  // -------------------- reset --------------------
   var resetBtn = document.getElementById("dash-reset");
   if (resetBtn) {
     resetBtn.addEventListener("click", function () {
@@ -245,7 +211,6 @@
     });
   }
 
-  // -------------------- helpers --------------------
   function timeAgo(ts) {
     var mins = Math.round((Date.now() - ts) / 60000);
     if (mins < 1) return "just now";
@@ -283,6 +248,5 @@
     toastTimer = setTimeout(function () { el.hidden = true; }, 2400);
   }
 
-  // -------------------- kick off --------------------
   initialFetch();
 })();

@@ -13,7 +13,6 @@
 </head>
 <body class="scan-body">
 
-<!-- minimal nav -->
 <nav class="nav">
   <a href="index.html" class="nav__brand"><span class="brand-mark">#Smile</span></a>
   <div class="nav__meta">
@@ -21,13 +20,10 @@
   </div>
 </nav>
 
-<!-- ============================================================
-     VIEW 1: first-time scan — onboarding
-     ============================================================ -->
+<!-- VIEW 1: first-time scan — onboarding -->
 <section class="view view--onboard" id="view-onboard" hidden>
   <div class="view__inner">
 
-    <!-- step 1: greeting -->
     <div class="step step--active" data-step="greet">
       <p class="step__eyebrow"><span class="dot"></span> first scan</p>
 
@@ -49,7 +45,6 @@
       </div>
     </div>
 
-    <!-- step 2: log the smile -->
     <div class="step" data-step="log">
       <p class="step__eyebrow">log a smile</p>
 
@@ -62,19 +57,7 @@
 
       <div class="field">
         <label class="field__label" for="log-city">where</label>
-        <select id="log-city" class="field__input">
-          <option value="">pick a city (optional)</option>
-          <option value="Austin, TX">Austin, TX</option>
-          <option value="New York, NY">New York, NY</option>
-          <option value="Los Angeles, CA">Los Angeles, CA</option>
-          <option value="Chicago, IL">Chicago, IL</option>
-          <option value="Miami, FL">Miami, FL</option>
-          <option value="Seattle, WA">Seattle, WA</option>
-          <option value="Denver, CO">Denver, CO</option>
-          <option value="Boston, MA">Boston, MA</option>
-          <option value="San Francisco, CA">San Francisco, CA</option>
-          <option value="Portland, OR">Portland, OR</option>
-        </select>
+        <input type="text" id="log-city" class="field__input" placeholder="city, state (e.g. San Jose, CA)" maxlength="80" autocomplete="address-level2" />
       </div>
 
       <div class="field">
@@ -89,7 +72,6 @@
       </div>
     </div>
 
-    <!-- step 3: confirm -->
     <div class="step" data-step="confirm">
       <div class="confirm__icon">
         <img src="assets/smiley.png" alt="" aria-hidden="true" />
@@ -116,7 +98,6 @@
       </div>
     </div>
 
-    <!-- step 4: claim -->
     <div class="step" data-step="claim">
       <p class="step__eyebrow">claim this shirt</p>
 
@@ -139,7 +120,6 @@
       </div>
     </div>
 
-    <!-- step 5: explain (for curious strangers) -->
     <div class="step" data-step="explain">
       <p class="step__eyebrow">what is this?</p>
 
@@ -155,16 +135,13 @@
 
       <div class="step__actions">
         <a href="index.html" class="btn btn--primary">tell me more</a>
-        <a href="shop.html" class="btn btn--ghost">get a shirt</a>
       </div>
     </div>
 
   </div>
 </section>
 
-<!-- ============================================================
-     VIEW 2: returning wearer — dashboard
-     ============================================================ -->
+<!-- VIEW 2: returning wearer — dashboard -->
 <section class="view view--dashboard" id="view-dashboard" hidden>
   <div class="view__inner">
 
@@ -175,26 +152,20 @@
       </h1>
     </header>
 
-    <!-- the big number -->
     <div class="dash__bignum">
       <p class="dash__bignum-num mono" id="dash-total">0</p>
       <p class="dash__bignum-label">smiles spread <span class="dash__bignum-since">since <span id="dash-since">today</span></span></p>
     </div>
 
-    <!-- log another -->
     <button class="btn btn--primary btn--full" id="dash-log">
       <span class="btn__icon">+</span> log another smile
     </button>
 
-    <!-- this shirt's history -->
     <div class="dash__history">
       <p class="step__eyebrow">history</p>
-      <ul class="history__list" id="dash-history">
-        <!-- populated by JS -->
-      </ul>
+      <ul class="history__list" id="dash-history"></ul>
     </div>
 
-    <!-- footer actions -->
     <div class="dash__footer">
       <a href="map.html" class="btn btn--ghost btn--full">see the world map</a>
       <button class="dash__reset" id="dash-reset">reset this shirt's data</button>
@@ -203,9 +174,7 @@
   </div>
 </section>
 
-<!-- ============================================================
-     QUICK-LOG modal (for dashboard "log another")
-     ============================================================ -->
+<!-- Quick-log modal -->
 <div class="modal" id="quick-modal" hidden>
   <div class="modal__backdrop" id="quick-backdrop"></div>
   <div class="modal__panel">
@@ -215,19 +184,7 @@
 
     <div class="field" style="margin-top: 24px;">
       <label class="field__label" for="quick-city">where</label>
-      <select id="quick-city" class="field__input">
-        <option value="">pick a city (optional)</option>
-        <option value="Austin, TX">Austin, TX</option>
-        <option value="New York, NY">New York, NY</option>
-        <option value="Los Angeles, CA">Los Angeles, CA</option>
-        <option value="Chicago, IL">Chicago, IL</option>
-        <option value="Miami, FL">Miami, FL</option>
-        <option value="Seattle, WA">Seattle, WA</option>
-        <option value="Denver, CO">Denver, CO</option>
-        <option value="Boston, MA">Boston, MA</option>
-        <option value="San Francisco, CA">San Francisco, CA</option>
-        <option value="Portland, OR">Portland, OR</option>
-      </select>
+      <input type="text" id="quick-city" class="field__input" placeholder="city, state (e.g. San Jose, CA)" maxlength="80" autocomplete="address-level2" />
     </div>
 
     <div class="field">
@@ -239,7 +196,6 @@
   </div>
 </div>
 
-<!-- toast for success messages -->
 <div class="toast" id="toast" hidden></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>

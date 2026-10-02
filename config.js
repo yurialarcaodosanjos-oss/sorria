@@ -1,23 +1,24 @@
 /* ============================================================
-   #Smile — Supabase config
-   ============================================================
-   
-   You need to fill in these two values from your Supabase project:
-   
-   1. Go to https://supabase.com and create a free account
-   2. Create a new project (pick US West region)
-   3. Once it's ready, go to Project Settings → API
-   4. Copy "Project URL" → paste below as SUPABASE_URL
-   5. Copy "anon public" key (NOT service_role!) → paste below as SUPABASE_ANON_KEY
-   
-   The anon key is safe to expose in client-side code — that's what it's
-   designed for. Just never paste the "service_role" key here.
-   
-   Until you fill these in, the site falls back to local-only storage
-   (the old behavior) so it still works for testing.
+   #Smile — Supabase + admin config
+
+   1. Supabase credentials
+      Go to https://supabase.com → your project → Settings → API
+      Copy "Project URL" → SUPABASE_URL
+      Copy "anon public" key → SUPABASE_ANON_KEY
+
+   2. Admin password
+      Set a password for the /admin page.
+      ⚠️ This is a soft gate — the password is visible in the browser's
+      JavaScript source. It keeps casual visitors out but is NOT a real
+      security boundary. Don't put anything truly sensitive behind it.
+      Change it from "changeme" before deploying.
+
+   Until SUPABASE_URL + SUPABASE_ANON_KEY are filled in, the site uses
+   local-only storage.
    ============================================================ */
 
 window.SMILE_CONFIG = {
-  SUPABASE_URL: "",      // e.g. "https://abcdefghijklmnop.supabase.co"
-  SUPABASE_ANON_KEY: ""  // e.g. "eyJhbGciOi..." (long string)
+  SUPABASE_URL: "",
+  SUPABASE_ANON_KEY: "",
+  ADMIN_PASSWORD: "changeme"
 };

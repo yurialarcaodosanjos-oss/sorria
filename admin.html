@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>admin — #Smile</title>
+<meta name="robots" content="noindex, nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Gochi+Hand&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="admin.css" />
+</head>
+<body class="admin-body">
+
+<nav class="nav">
+  <a href="index.html" class="nav__brand"><span class="brand-mark">#Smile</span></a>
+  <div class="nav__meta">
+    <span class="admin-badge">admin</span>
+    <a href="map.html" class="nav__link">map</a>
+  </div>
+</nav>
+
+<!-- Gate -->
+<section id="gate" class="gate" hidden>
+  <div class="gate__inner">
+    <p class="eyebrow"><span class="dot"></span> admin only</p>
+    <h1 class="gate__headline">this door is <em>locked.</em></h1>
+    <p class="gate__sub">enter the admin password to continue.</p>
+    <div class="field" style="margin-top: 24px;">
+      <input type="password" id="gate-input" class="field__input" placeholder="password" autofocus />
+    </div>
+    <button class="btn btn--primary btn--full" id="gate-submit">unlock</button>
+    <p class="gate__hint" id="gate-hint" hidden>wrong password.</p>
+  </div>
+</section>
+
+<!-- Dashboard (hidden until unlocked) -->
+<main id="dashboard" hidden>
+
+  <header class="admin-hero">
+    <div class="admin-hero__inner">
+      <p class="eyebrow"><span class="dot"></span> admin · live data</p>
+      <h1 class="admin-hero__headline">
+        all shirts.<br />
+        <em>all smiles.</em>
+      </h1>
+
+      <div class="admin-stats">
+        <div class="admin-stat">
+          <span class="admin-stat__num mono" id="s-shirts">—</span>
+          <span class="admin-stat__label">shirts</span>
+        </div>
+        <span class="admin-stat__sep">·</span>
+        <div class="admin-stat">
+          <span class="admin-stat__num mono" id="s-smiles">—</span>
+          <span class="admin-stat__label">smiles</span>
+        </div>
+        <span class="admin-stat__sep">·</span>
+        <div class="admin-stat">
+          <span class="admin-stat__num mono" id="s-cities">—</span>
+          <span class="admin-stat__label">cities</span>
+        </div>
+        <span class="admin-stat__sep">·</span>
+        <div class="admin-stat">
+          <span class="admin-stat__num mono" id="s-today">—</span>
+          <span class="admin-stat__label">today</span>
+        </div>
+      </div>
+
+      <div class="admin-source" id="admin-source">—</div>
+    </div>
+  </header>
+
+  <!-- Shirts panel -->
+  <section class="panel">
+    <div class="panel__header">
+      <p class="section-eyebrow">shirts</p>
+      <button class="btn btn--small" id="refresh-btn">refresh</button>
+    </div>
+
+    <div class="shirts-table-wrap">
+      <table class="shirts-table">
+        <thead>
+          <tr>
+            <th>code</th>
+            <th class="num">smiles</th>
+            <th>first</th>
+            <th>last</th>
+            <th>claimed by</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="shirts-body">
+          <tr><td colspan="6" class="loading">loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Smiles panel -->
+  <section class="panel">
+    <div class="panel__header">
+      <p class="section-eyebrow">recent smiles</p>
+      <div class="panel__controls">
+        <input type="text" id="filter-input" placeholder="filter by code, city, or story" />
+        <select id="shirt-filter">
+          <option value="">all shirts</option>
+        </select>
+      </div>
+    </div>
+
+    <ul class="smiles-list" id="smiles-list">
+      <li class="loading">loading…</li>
+    </ul>
+  </section>
+
+  <!-- Mint new shirt code -->
+  <section class="panel">
+    <p class="section-eyebrow">mint a new shirt code</p>
+    <p class="panel__hint">pre-register a code so it shows up here before anyone scans it. not required — codes are auto-created on first scan either way.</p>
+    <div class="mint-row">
+      <input type="text" id="mint-code" placeholder="e.g. LUCY01" maxlength="12" />
+      <button class="btn btn--primary" id="mint-submit">add shirt</button>
+    </div>
+    <p class="mint-feedback" id="mint-feedback" hidden></p>
+  </section>
+
+  <div class="admin-footer">
+    <button class="dash__reset" id="lock-btn">lock admin</button>
+  </div>
+</main>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="db.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

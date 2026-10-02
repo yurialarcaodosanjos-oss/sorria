@@ -1,23 +1,22 @@
 # Netlify config for the #Smile site
-# No build step needed — this is a static site.
 
 [build]
   publish = "."
 
+# /admin → /admin.html (must come BEFORE the shirt-code rewrite)
+[[redirects]]
+  from = "/admin"
+  to = "/admin.html"
+  status = 200
+
 # Pretty URL: /SMILE1 → /scan.html?code=SMILE1
-# Lets shirt QR codes use clean short URLs.
+# Netlify skips this when the path matches an existing file,
+# so /index.html, /scan.html, /admin.html, /styles.css, /vendor/*, etc.
+# still serve normally.
 [[redirects]]
   from = "/:code"
   to = "/scan.html?code=:code"
   status = 200
-  conditions = {Path = ["/^[A-Z0-9]{3,12}$/"]}
-
-# Don't redirect actual HTML pages
-[[redirects]]
-  from = "/index.html"
-  to = "/index.html"
-  status = 200
-  force = false
 
 # Security & caching headers
 [[headers]]
@@ -26,6 +25,12 @@
     X-Frame-Options = "SAMEORIGIN"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Prevent admin page from being indexed by search engines
+[[headers]]
+  for = "/admin.html"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
 
 [[headers]]
   for = "/vendor/*"

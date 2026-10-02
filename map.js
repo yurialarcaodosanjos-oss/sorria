@@ -1,12 +1,11 @@
 /* ============================================================
    #Smile — map.js
-   loads the world map, plots all smiles (seeded + user-logged),
-   renders the recent-stories feed.
+   loads the world map, plots all smiles via db wrapper,
+   geocodes arbitrary city names on-demand with caching.
    ============================================================ */
 
 (function () {
-  // -------------------- city coordinates --------------------
-  // these match the cities offered in the log form on scan.html
+  // -------------------- known cities (instant, no network call) --------------------
   var CITY_COORDS = {
     "Austin, TX":         { lat: 30.2672, lng: -97.7431 },
     "New York, NY":       { lat: 40.7128, lng: -74.0060 },
@@ -17,37 +16,25 @@
     "Denver, CO":         { lat: 39.7392, lng: -104.9903 },
     "Boston, MA":         { lat: 42.3601, lng: -71.0589 },
     "San Francisco, CA":  { lat: 37.7749, lng: -122.4194 },
+    "San Jose, CA":       { lat: 37.3382, lng: -121.8863 },
     "Portland, OR":       { lat: 45.5152, lng: -122.6784 }
   };
 
-  // -------------------- seed data --------------------
-  // realistic-looking smiles from "other wearers" so the map feels alive
-  // every visitor sees the same seed data so it feels like a real shared world
+  // -------------------- seed data (fake smiles for the "alive" look) --------------------
   var SEED_SMILES = [
-    { city: "New York, NY",       story: "kid on the subway pointed and waved",                     shirtCode: "3B8K1", hoursAgo: 0.3 },
-    { city: "Austin, TX",         story: "barista drew a smiley on my cup",                          shirtCode: "9M2P4", hoursAgo: 1.2 },
-    { city: "Los Angeles, CA",    story: "someone said 'i needed this today'",                       shirtCode: "4F7Q3", hoursAgo: 2.1 },
-    { city: "Chicago, IL",        story: null,                                                       shirtCode: "8L1X9", hoursAgo: 3.5 },
-    { city: "Seattle, WA",        story: "old man tipped his hat at me",                             shirtCode: "2N5W8", hoursAgo: 5 },
-    { city: "Miami, FL",          story: "whole table at brunch smiled back",                        shirtCode: "6T3J5", hoursAgo: 6.4 },
-    { city: "Denver, CO",         story: null,                                                       shirtCode: "1V9H2", hoursAgo: 8 },
-    { city: "Boston, MA",         story: "girl on the bus said 'love your shirt'",                   shirtCode: "5C4R7", hoursAgo: 10 },
-    { city: "San Francisco, CA",  story: "stranger laughed and showed me hers — same shirt",         shirtCode: "7G8Y6", hoursAgo: 14 },
-    { city: "Portland, OR",       story: "kid in line at the bakery pointed and grinned",            shirtCode: "3Z1U4", hoursAgo: 18 },
-    { city: "New York, NY",       story: "dog walker waved across the street",                       shirtCode: "8K2L5", hoursAgo: 22 },
-    { city: "Austin, TX",         story: null,                                                       shirtCode: "4P9N1", hoursAgo: 26 },
-    { city: "Los Angeles, CA",    story: "barista wrote 'keep smiling' on my cup",                   shirtCode: "1Q6W3", hoursAgo: 30 },
-    { city: "Chicago, IL",        story: "woman on the train told me about her day",                 shirtCode: "9R4T7", hoursAgo: 36 },
-    { city: "Miami, FL",          story: null,                                                       shirtCode: "2X8B6", hoursAgo: 44 },
-    { city: "Seattle, WA",        story: "kid yelled 'cool shirt!' from a scooter",                  shirtCode: "5V7M4", hoursAgo: 52 },
-    { city: "San Francisco, CA",  story: null,                                                       shirtCode: "7C3D8", hoursAgo: 68 },
-    { city: "Denver, CO",         story: "couple at the next table smiled together",                 shirtCode: "6F1G9", hoursAgo: 84 },
-    { city: "Boston, MA",         story: null,                                                       shirtCode: "0H5J2", hoursAgo: 102 },
-    { city: "Portland, OR",       story: "barista said 'this just made my morning'",                 shirtCode: "4A6S8", hoursAgo: 120 }
+    { city: "New York, NY",       story: "kid on the subway pointed and waved",       shirtCode: "3B8K1", hoursAgo: 0.3 },
+    { city: "Austin, TX",         story: "barista drew a smiley on my cup",            shirtCode: "9M2P4", hoursAgo: 1.2 },
+    { city: "Los Angeles, CA",    story: "someone said 'i needed this today'",         shirtCode: "4F7Q3", hoursAgo: 2.1 },
+    { city: "Chicago, IL",        story: null,                                         shirtCode: "8L1X9", hoursAgo: 3.5 },
+    { city: "Seattle, WA",        story: "old man tipped his hat at me",               shirtCode: "2N5W8", hoursAgo: 5 },
+    { city: "Miami, FL",          story: "whole table at brunch smiled back",          shirtCode: "6T3J5", hoursAgo: 6.4 },
+    { city: "Denver, CO",         story: null,                                         shirtCode: "1V9H2", hoursAgo: 8 },
+    { city: "Boston, MA",         story: "girl on the bus said 'love your shirt'",     shirtCode: "5C4R7", hoursAgo: 10 },
+    { city: "San Francisco, CA",  story: "stranger laughed and showed me hers",        shirtCode: "7G8Y6", hoursAgo: 14 },
+    { city: "Portland, OR",       story: "kid in line at the bakery pointed",          shirtCode: "3Z1U4", hoursAgo: 18 }
   ];
 
   function jitter(coord) {
-    // tiny random offset so multiple smiles in same city don't stack
     return coord + (Math.random() - 0.5) * 0.08;
   }
 
@@ -68,28 +55,71 @@
     }).filter(Boolean);
   }
 
-  // -------------------- map of user smiles via db API --------------------
-  // Returns a Promise that resolves to user-logged smiles for the map.
-  // Goes through window.db which routes to either Supabase or localStorage.
+  // -------------------- geocoding (Nominatim with localStorage cache) --------------------
+  function getCachedCoord(cityName) {
+    try {
+      var cache = JSON.parse(localStorage.getItem("smile.geocache") || "{}");
+      return cache[cityName] || null;
+    } catch (e) { return null; }
+  }
+
+  function setCachedCoord(cityName, coord) {
+    try {
+      var cache = JSON.parse(localStorage.getItem("smile.geocache") || "{}");
+      cache[cityName] = coord;
+      localStorage.setItem("smile.geocache", JSON.stringify(cache));
+    } catch (e) {}
+  }
+
+  function geocodeCity(cityName) {
+    if (CITY_COORDS[cityName]) return Promise.resolve(CITY_COORDS[cityName]);
+    var cached = getCachedCoord(cityName);
+    if (cached) return Promise.resolve(cached);
+    var url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + encodeURIComponent(cityName);
+    return fetch(url, { headers: { "Accept": "application/json" } })
+      .then(function (r) { return r.json(); })
+      .then(function (results) {
+        if (!results || !results.length) return null;
+        var coord = { lat: parseFloat(results[0].lat), lng: parseFloat(results[0].lon) };
+        setCachedCoord(cityName, coord);
+        return coord;
+      })
+      .catch(function () { return null; });
+  }
+
+  // -------------------- user smiles via db API --------------------
   function buildUserSmilesAsync() {
     if (!window.db) return Promise.resolve([]);
     return window.db.getAllSmiles().then(function (rows) {
-      var out = [];
-      rows.forEach(function (s) {
-        if (!s.city) return;
-        var coords = CITY_COORDS[s.city];
-        if (!coords) return;
-        out.push({
-          city: s.city,
-          story: s.story,
-          shirtCode: s.code,
-          ts: s.ts,
-          lat: jitter(coords.lat),
-          lng: jitter(coords.lng),
-          isYours: !!s.isYours
+      var cities = {};
+      rows.forEach(function (s) { if (s.city) cities[s.city] = true; });
+      var cityNames = Object.keys(cities);
+
+      return Promise.all(cityNames.map(function (name) {
+        return geocodeCity(name).then(function (coord) {
+          return { name: name, coord: coord };
         });
+      })).then(function (resolved) {
+        var lookup = {};
+        resolved.forEach(function (r) { if (r.coord) lookup[r.name] = r.coord; });
+
+        var out = [];
+        rows.forEach(function (s) {
+          if (!s.city) return;
+          var coord = lookup[s.city];
+          if (!coord) return;
+          out.push({
+            city: s.city,
+            story: s.story,
+            shirtCode: s.code,
+            ts: s.ts,
+            lat: jitter(coord.lat),
+            lng: jitter(coord.lng),
+            isYours: !!s.isYours
+          });
+        });
+        return out;
       });
-      return out;
     }).catch(function (err) {
       console.error("buildUserSmilesAsync failed:", err);
       return [];
@@ -127,15 +157,13 @@
     requestAnimationFrame(step);
   }
 
-  // -------------------- assemble data and render --------------------
+  // -------------------- assemble and render --------------------
   var seedSmiles = buildSeedSmiles();
 
   buildUserSmilesAsync().then(function (userSmiles) {
     var allSmiles = seedSmiles.concat(userSmiles);
-    // sort newest first
     allSmiles.sort(function (a, b) { return b.ts - a.ts; });
 
-    // -------------------- render stats --------------------
     var totalCount = allSmiles.length;
     var citySet = {};
     allSmiles.forEach(function (s) { citySet[s.city] = true; });
@@ -146,17 +174,15 @@
     animateNumber(document.getElementById("stat-cities"), cityCount);
     animateNumber(document.getElementById("stat-yours"), yoursCount);
 
-    // -------------------- build map --------------------
-    // wrap in try/catch so if Leaflet ever fails to load, the rest of the page still works
     try {
       if (typeof L === "undefined") throw new Error("Leaflet (L) is not defined");
 
       var map = L.map("map", {
-        center: [38.5, -96],         // continental US center for US-only launch
+        center: [38.5, -96],
         zoom: 4,
         minZoom: 2,
         maxZoom: 12,
-        scrollWheelZoom: false,      // avoid hijacking page scroll
+        scrollWheelZoom: false,
         zoomControl: true,
         attributionControl: true
       });
@@ -166,8 +192,7 @@
         attribution: '© <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>'
       }).addTo(map);
 
-      // -------------------- plot dots --------------------
-      var RECENT_THRESHOLD_MS = 6 * 3600 * 1000; // 6 hours
+      var RECENT_THRESHOLD_MS = 6 * 3600 * 1000;
 
       allSmiles.forEach(function (s) {
         var classes = ["smile-dot"];
@@ -198,7 +223,6 @@
         });
       });
     } catch (err) {
-      // graceful fallback if the map fails — show a friendly note in the container
       var mapEl = document.getElementById("map");
       if (mapEl) {
         mapEl.innerHTML =
@@ -209,9 +233,8 @@
       console.warn("Leaflet failed to initialize:", err);
     }
 
-    // -------------------- render stories feed --------------------
     var feed = document.getElementById("stories-list");
-    var recent = allSmiles.slice(0, 12); // newest 12
+    var recent = allSmiles.slice(0, 12);
 
     if (recent.length === 0) {
       feed.innerHTML = '<li class="stories__empty">no smiles yet. wear the shirt.</li>';

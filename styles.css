@@ -3,7 +3,6 @@
    editorial minimalism, warm accent, mono for data
    ============================================================ */
 
-/* locally-vendored hand-drawn font — loads even when Google Fonts is unreachable */
 @font-face {
   font-family: "Gochi Hand";
   src: url("vendor/fonts/GochiHand-Regular.ttf") format("truetype");
@@ -13,7 +12,6 @@
 }
 
 :root {
-  /* palette */
   --paper: #FAF8F3;
   --paper-soft: #F2EFE8;
   --ink: #1A1714;
@@ -23,19 +21,16 @@
   --smile: #EF9F27;
   --smile-deep: #C77E10;
 
-  /* type */
   --display: "Newsreader", "Iowan Old Style", Georgia, serif;
   --hand: "Gochi Hand", "Comic Sans MS", cursive;
   --body: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
-  /* layout */
   --max: 720px;
   --gutter: clamp(20px, 5vw, 40px);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-
 html { -webkit-text-size-adjust: 100%; }
 
 body {
@@ -54,9 +49,7 @@ em { font-style: italic; font-family: var(--display); font-weight: 500; }
 strong { font-weight: 600; }
 .mono { font-family: var(--mono); font-feature-settings: "ss01" on; }
 
-/* ============================================================
-   nav
-   ============================================================ */
+/* nav */
 .nav {
   position: sticky; top: 0; z-index: 50;
   display: flex; justify-content: space-between; align-items: center;
@@ -76,11 +69,7 @@ strong { font-weight: 600; }
   line-height: 1;
 }
 
-.nav__meta {
-  display: flex; align-items: center; gap: 18px;
-  font-size: 12px;
-}
-
+.nav__meta { display: flex; align-items: center; gap: 18px; font-size: 12px; }
 .nav__via { color: var(--ink-quiet); font-size: 11px; }
 @media (max-width: 540px) {
   .nav__via { display: none; }
@@ -93,18 +82,7 @@ strong { font-weight: 600; }
 }
 .nav__link:hover { color: var(--ink); }
 
-.nav__link--cta {
-  background: var(--ink);
-  color: var(--paper);
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-weight: 500;
-}
-.nav__link--cta:hover { color: var(--paper); background: var(--smile-deep); }
-
-/* ============================================================
-   hero
-   ============================================================ */
+/* hero */
 .hero {
   padding: clamp(48px, 12vw, 120px) var(--gutter) clamp(64px, 14vw, 120px);
   max-width: var(--max);
@@ -155,7 +133,6 @@ strong { font-weight: 600; }
   max-width: 480px;
   animation: fade-up 800ms cubic-bezier(0.2, 0.7, 0.2, 1) 200ms both;
 }
-
 .hero__body p + p { margin-top: 12px; }
 .hero__body strong { color: var(--ink); }
 
@@ -178,9 +155,7 @@ strong { font-weight: 600; }
   }
 }
 
-/* ============================================================
-   live numbers band
-   ============================================================ */
+/* band */
 .band {
   background: var(--ink);
   color: var(--paper);
@@ -188,16 +163,9 @@ strong { font-weight: 600; }
   border-top: 0.5px solid var(--line);
   border-bottom: 0.5px solid var(--line);
 }
-
-.band__inner {
-  max-width: var(--max);
-  margin: 0 auto;
-}
-
+.band__inner { max-width: var(--max); margin: 0 auto; }
 .band__label {
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
   color: rgba(250, 248, 243, 0.5);
   margin-bottom: 28px;
   display: flex; align-items: center; gap: 10px;
@@ -208,17 +176,14 @@ strong { font-weight: 600; }
   background: var(--smile);
   animation: pulse 1.8s ease-in-out infinite;
 }
-
 .band__grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: clamp(16px, 4vw, 40px);
 }
-
 @media (max-width: 540px) {
   .band__grid { grid-template-columns: 1fr; gap: 24px; }
 }
-
 .stat__num {
   font-size: clamp(28px, 6vw, 44px);
   font-weight: 500;
@@ -227,23 +192,15 @@ strong { font-weight: 600; }
   margin-bottom: 6px;
   color: var(--paper);
 }
-
 .stat--accent .stat__num { color: var(--smile); }
+.stat__label { font-size: 12px; color: rgba(250, 248, 243, 0.6); }
 
-.stat__label {
-  font-size: 12px;
-  color: rgba(250, 248, 243, 0.6);
-}
-
-/* ============================================================
-   story card — the shirt's own history
-   ============================================================ */
+/* story card */
 .story {
   padding: clamp(48px, 10vw, 88px) var(--gutter);
   max-width: var(--max);
   margin: 0 auto;
 }
-
 .story__card {
   padding: clamp(28px, 5vw, 44px);
   background: var(--paper-soft);
@@ -251,7 +208,6 @@ strong { font-weight: 600; }
   border-left: 3px solid var(--smile);
   position: relative;
 }
-
 .story__tag {
   font-size: 10px;
   letter-spacing: 0.1em;
@@ -259,7 +215,6 @@ strong { font-weight: 600; }
   color: var(--ink-quiet);
   margin-bottom: 14px;
 }
-
 .story__line {
   font-family: var(--display);
   font-size: clamp(20px, 3.5vw, 26px);
@@ -267,11 +222,7 @@ strong { font-weight: 600; }
   color: var(--ink);
   margin-bottom: 14px;
 }
-
-.story__line em {
-  color: var(--smile-deep);
-}
-
+.story__line em { color: var(--smile-deep); }
 .story__quote {
   font-family: var(--display);
   font-style: italic;
@@ -281,15 +232,12 @@ strong { font-weight: 600; }
   border-top: 0.5px solid var(--line);
 }
 
-/* ============================================================
-   how it works
-   ============================================================ */
+/* how it works */
 .how {
   padding: clamp(40px, 8vw, 80px) var(--gutter);
   max-width: var(--max);
   margin: 0 auto;
 }
-
 .section-eyebrow {
   font-size: 10px;
   letter-spacing: 0.12em;
@@ -297,13 +245,11 @@ strong { font-weight: 600; }
   color: var(--ink-quiet);
   margin-bottom: 36px;
 }
-
 .how__list {
   list-style: none;
   display: flex; flex-direction: column;
   gap: 28px;
 }
-
 .how__step {
   display: flex;
   gap: 24px;
@@ -311,9 +257,7 @@ strong { font-weight: 600; }
   padding-bottom: 28px;
   border-bottom: 0.5px solid var(--line);
 }
-
 .how__step:last-child { border-bottom: none; padding-bottom: 0; }
-
 .how__num {
   font-size: 14px;
   width: 32px; height: 32px;
@@ -324,12 +268,10 @@ strong { font-weight: 600; }
   flex-shrink: 0;
   font-weight: 500;
 }
-
 .how__step--last .how__num {
   background: var(--smile);
   color: var(--ink);
 }
-
 .how__body h3 {
   font-family: var(--display);
   font-size: clamp(19px, 3vw, 24px);
@@ -339,23 +281,19 @@ strong { font-weight: 600; }
   color: var(--ink);
   margin-bottom: 6px;
 }
-
 .how__body p {
   font-size: 15px;
   color: var(--ink-soft);
   line-height: 1.5;
 }
 
-/* ============================================================
-   cta
-   ============================================================ */
+/* cta */
 .cta {
   padding: clamp(60px, 12vw, 120px) var(--gutter);
   max-width: var(--max);
   margin: 0 auto;
   text-align: center;
 }
-
 .cta__headline {
   font-family: var(--display);
   font-size: clamp(40px, 8vw, 72px);
@@ -366,20 +304,17 @@ strong { font-weight: 600; }
   margin-bottom: 16px;
   color: var(--ink);
 }
-
 .cta__sub {
   font-size: 14px;
   color: var(--ink-quiet);
   margin-bottom: 36px;
 }
-
 .cta__buttons {
   display: flex;
   flex-direction: column;
   gap: 12px;
   align-items: center;
 }
-
 .btn {
   display: inline-block;
   padding: 14px 28px;
@@ -393,7 +328,6 @@ strong { font-weight: 600; }
   min-width: 240px;
   text-align: center;
 }
-
 .btn--primary {
   background: var(--ink);
   color: var(--paper);
@@ -402,7 +336,6 @@ strong { font-weight: 600; }
   background: var(--smile-deep);
   transform: translateY(-1px);
 }
-
 .btn--ghost {
   background: transparent;
   color: var(--ink-soft);
@@ -413,21 +346,17 @@ strong { font-weight: 600; }
   border-color: var(--ink);
 }
 
-/* ============================================================
-   footer
-   ============================================================ */
+/* footer */
 .footer {
   background: var(--paper-soft);
   padding: 32px var(--gutter) 28px;
   border-top: 0.5px solid var(--line);
 }
-
 .footer__inner {
   max-width: var(--max);
   margin: 0 auto;
   text-align: center;
 }
-
 .footer__tag {
   font-family: var(--display);
   font-style: italic;
@@ -435,31 +364,25 @@ strong { font-weight: 600; }
   color: var(--ink);
   margin-bottom: 8px;
 }
-
 .footer__meta {
   font-size: 10px;
   letter-spacing: 0.05em;
   color: var(--ink-quiet);
 }
 
-/* ============================================================
-   animations
-   ============================================================ */
+/* animations */
 @keyframes fade-up {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes smiley-in {
   from { opacity: 0; transform: rotate(-12deg) scale(0.8); }
   to { opacity: 0.12; transform: rotate(-6deg) scale(1); }
 }
-
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }
 }
-
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
