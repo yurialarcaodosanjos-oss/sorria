@@ -20,39 +20,9 @@
     "Portland, OR":       { lat: 45.5152, lng: -122.6784 }
   };
 
-  // -------------------- seed data (fake smiles for the "alive" look) --------------------
-  var SEED_SMILES = [
-    { city: "New York, NY",       story: "kid on the subway pointed and waved",       shirtCode: "3B8K1", hoursAgo: 0.3 },
-    { city: "Austin, TX",         story: "barista drew a smiley on my cup",            shirtCode: "9M2P4", hoursAgo: 1.2 },
-    { city: "Los Angeles, CA",    story: "someone said 'i needed this today'",         shirtCode: "4F7Q3", hoursAgo: 2.1 },
-    { city: "Chicago, IL",        story: null,                                         shirtCode: "8L1X9", hoursAgo: 3.5 },
-    { city: "Seattle, WA",        story: "old man tipped his hat at me",               shirtCode: "2N5W8", hoursAgo: 5 },
-    { city: "Miami, FL",          story: "whole table at brunch smiled back",          shirtCode: "6T3J5", hoursAgo: 6.4 },
-    { city: "Denver, CO",         story: null,                                         shirtCode: "1V9H2", hoursAgo: 8 },
-    { city: "Boston, MA",         story: "girl on the bus said 'love your shirt'",     shirtCode: "5C4R7", hoursAgo: 10 },
-    { city: "San Francisco, CA",  story: "stranger laughed and showed me hers",        shirtCode: "7G8Y6", hoursAgo: 14 },
-    { city: "Portland, OR",       story: "kid in line at the bakery pointed",          shirtCode: "3Z1U4", hoursAgo: 18 }
-  ];
-
+  // tiny coordinate jitter so multiple smiles in the same city don't stack
   function jitter(coord) {
     return coord + (Math.random() - 0.5) * 0.08;
-  }
-
-  function buildSeedSmiles() {
-    var now = Date.now();
-    return SEED_SMILES.map(function (s) {
-      var coords = CITY_COORDS[s.city];
-      if (!coords) return null;
-      return {
-        city: s.city,
-        story: s.story,
-        shirtCode: s.shirtCode,
-        ts: now - (s.hoursAgo * 3600 * 1000),
-        lat: jitter(coords.lat),
-        lng: jitter(coords.lng),
-        isYours: false
-      };
-    }).filter(Boolean);
   }
 
   // -------------------- geocoding (Nominatim with localStorage cache) --------------------
@@ -158,10 +128,8 @@
   }
 
   // -------------------- assemble and render --------------------
-  var seedSmiles = buildSeedSmiles();
-
   buildUserSmilesAsync().then(function (userSmiles) {
-    var allSmiles = seedSmiles.concat(userSmiles);
+    var allSmiles = userSmiles.slice();
     allSmiles.sort(function (a, b) { return b.ts - a.ts; });
 
     var totalCount = allSmiles.length;

@@ -49,6 +49,9 @@ em { font-style: italic; font-family: var(--display); font-weight: 500; }
 strong { font-weight: 600; }
 .mono { font-family: var(--mono); font-feature-settings: "ss01" on; }
 
+/* ensure [hidden] always wins over display rules */
+[hidden] { display: none !important; }
+
 /* nav */
 .nav {
   position: sticky; top: 0; z-index: 50;

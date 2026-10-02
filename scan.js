@@ -7,7 +7,7 @@
 
   function getCode() {
     var path = window.location.pathname.split("/").pop().replace(/\.html$/, "").replace(/^SMILE-/i, "");
-    if (path && VALID_CODE.test(path) && path !== "scan" && path !== "index") {
+    if (path && VALID_CODE.test(path) && path !== "scan" && path !== "index" && path !== "admin" && path !== "map") {
       return path.toUpperCase();
     }
     var params = new URLSearchParams(window.location.search);
@@ -15,10 +15,17 @@
     if (qp && VALID_CODE.test(qp)) return qp.toUpperCase();
     var hash = window.location.hash.replace(/^#/, "");
     if (hash && VALID_CODE.test(hash)) return hash.toUpperCase();
-    return "DEMO1";
+    return null;
   }
 
   var CODE = getCode();
+
+  // If no shirt code was given, this page shouldn't have been reached —
+  // bounce to the landing page.
+  if (!CODE) {
+    window.location.replace("index.html");
+    return;
+  }
   var shirt = null;
 
   document.querySelectorAll("#nav-code, #greet-code, #confirm-code, #dash-code, #story-code").forEach(function (el) {

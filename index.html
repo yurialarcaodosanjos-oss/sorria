@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-<title>#Smile — someone smiled at you, and now you're here.</title>
+<title>#Smile — a smile is contagious. so is this.</title>
 <meta name="description" content="A t-shirt that plays a game: spread smiles, log them on a map, fund kids' causes." />
 <meta property="og:title" content="#Smile — a smile is contagious. so is this." />
 <meta property="og:description" content="A t-shirt that plays a game: spread smiles, log them on a map, fund kids' causes." />
@@ -20,26 +20,26 @@
     <span class="brand-mark">#Smile</span>
   </a>
   <div class="nav__meta">
-    <span class="nav__via" id="nav-via">via shirt № <span class="mono" id="nav-code">7K9X2</span></span>
+    <span class="nav__via" id="nav-via" hidden>via shirt № <span class="mono" id="nav-code">—</span></span>
     <a href="map.html" class="nav__link">map</a>
   </div>
 </nav>
 
 <header class="hero">
   <div class="hero__inner">
-    <p class="eyebrow" id="hero-eyebrow">
-      <span class="dot"></span> you just scanned shirt № <span class="mono" id="hero-code">7K9X2</span>
+    <p class="eyebrow" id="hero-eyebrow" hidden>
+      <span class="dot"></span> you just scanned shirt № <span class="mono" id="hero-code">—</span>
     </p>
 
-    <h1 class="hero__headline">
-      someone smiled<br />
-      <em>at you,</em><br />
-      and now you're here.
+    <h1 class="hero__headline" id="hero-headline">
+      a smile is<br />
+      <em>contagious.</em><br />
+      so is this.
     </h1>
 
     <div class="hero__body">
       <p>this is a t-shirt that plays a game. spread smiles, log them on a map, fund kids' causes.</p>
-      <p>the person wearing it didn't tell you to scan. <strong>that's how it spreads.</strong></p>
+      <p id="hero-sub" hidden>the person wearing it didn't tell you to scan. <strong>that's how it spreads.</strong></p>
     </div>
 
     <img class="hero__smiley" src="assets/smiley.png" alt="" aria-hidden="true" />
@@ -51,26 +51,27 @@
     <p class="band__label">live, right now</p>
     <div class="band__grid">
       <div class="stat">
-        <p class="stat__num mono" data-target="14287">0</p>
+        <p class="stat__num mono" id="stat-smiles">0</p>
         <p class="stat__label">smiles spread</p>
       </div>
       <div class="stat">
-        <p class="stat__num mono" data-target="312">0</p>
+        <p class="stat__num mono" id="stat-shirts">0</p>
         <p class="stat__label">shirts in the wild</p>
       </div>
       <div class="stat stat--accent">
-        <p class="stat__num mono" data-target="4128" data-prefix="$">$0</p>
-        <p class="stat__label">donated this month</p>
+        <p class="stat__num mono" id="stat-cities">0</p>
+        <p class="stat__label">cities reached</p>
       </div>
     </div>
   </div>
 </section>
 
-<section class="story">
+<!-- Shirt-specific story card. Only shown when ?code=XXX in URL. -->
+<section class="story" id="story-section" hidden>
   <div class="story__card">
-    <p class="story__tag mono">shirt № <span id="story-code">7K9X2</span></p>
-    <p class="story__line">the shirt you scanned has spread <em>23 smiles</em> across <em>4 cities</em>.</p>
-    <p class="story__quote">today in Austin: "kid waved at me on the subway."</p>
+    <p class="story__tag mono">shirt № <span id="story-code">—</span></p>
+    <p class="story__line" id="story-line">this shirt is just getting started.</p>
+    <p class="story__quote" id="story-quote" hidden></p>
   </div>
 </section>
 
@@ -113,7 +114,7 @@
   <p class="cta__sub">a smile travels further than you think.</p>
   <div class="cta__buttons">
     <a href="map.html" class="btn btn--primary">explore the map</a>
-    <a href="#" id="scan-this-shirt" class="btn btn--ghost">scan this shirt (№ <span class="mono" id="cta-code">—</span>)</a>
+    <a href="#" id="scan-this-shirt" class="btn btn--ghost" hidden>scan this shirt (№ <span class="mono" id="cta-code">—</span>)</a>
   </div>
 </section>
 
@@ -124,6 +125,9 @@
   </div>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="db.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
