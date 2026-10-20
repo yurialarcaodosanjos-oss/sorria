@@ -72,6 +72,18 @@ strong { font-weight: 600; }
   line-height: 1;
 }
 
+/* when the brand mark is the SVG logo (text + smiley together) */
+.brand-mark--logo {
+  display: block;
+  height: 32px;
+  width: auto;
+  /* make the black ink match the brand ink color via filter */
+  /* --ink is #1A1714 which is near-black, so no filter needed */
+}
+@media (max-width: 540px) {
+  .brand-mark--logo { height: 28px; }
+}
+
 .nav__meta { display: flex; align-items: center; gap: 18px; font-size: 12px; }
 .nav__via { color: var(--ink-quiet); font-size: 11px; }
 @media (max-width: 540px) {
