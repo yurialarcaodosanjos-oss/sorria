@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+<title>#Smile — a smile is contagious. so is this.</title>
+<meta name="description" content="A t-shirt that plays a game: spread smiles, log them on a map, fund kids' causes." />
+<meta property="og:title" content="#Smile — a smile is contagious. so is this." />
+<meta property="og:description" content="A t-shirt that plays a game: spread smiles, log them on a map, fund kids' causes." />
+<meta property="og:type" content="website" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Gochi+Hand&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="nav__brand">
+    <img class="brand-mark brand-mark--logo" src="assets/logo.svg" alt="#Smile" />
+  </a>
+  <div class="nav__meta">
+    <span class="nav__via" id="nav-via" hidden>via shirt № <span class="mono" id="nav-code">—</span></span>
+    <a href="map.html" class="nav__link">map</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="hero__inner">
+    <p class="eyebrow" id="hero-eyebrow" hidden>
+      <span class="dot"></span> you just scanned shirt № <span class="mono" id="hero-code">—</span>
+    </p>
+
+    <h1 class="hero__headline" id="hero-headline">
+      a smile is<br />
+      <em>contagious.</em><br />
+      so is this.
+    </h1>
+
+    <div class="hero__body">
+      <p>this is a t-shirt that plays a game. spread smiles, log them on a map, fund kids' causes.</p>
+      <p id="hero-sub" hidden>the person wearing it didn't tell you to scan. <strong>that's how it spreads.</strong></p>
+    </div>
+
+    <img class="hero__smiley" src="assets/smiley.svg" alt="" aria-hidden="true" />
+  </div>
+</header>
+
+<section class="band">
+  <div class="band__inner">
+    <p class="band__label">live, right now</p>
+    <div class="band__grid">
+      <div class="stat">
+        <p class="stat__num mono" id="stat-smiles">0</p>
+        <p class="stat__label">smiles spread</p>
+      </div>
+      <div class="stat">
+        <p class="stat__num mono" id="stat-shirts">0</p>
+        <p class="stat__label">shirts in the wild</p>
+      </div>
+      <div class="stat stat--accent">
+        <p class="stat__num mono" id="stat-cities">0</p>
+        <p class="stat__label">cities reached</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Shirt-specific story card. Only shown when ?code=XXX in URL. -->
+<section class="story" id="story-section" hidden>
+  <div class="story__card">
+    <p class="story__tag mono">shirt № <span id="story-code">—</span></p>
+    <p class="story__line" id="story-line">this shirt is just getting started.</p>
+    <p class="story__quote" id="story-quote" hidden></p>
+  </div>
+</section>
+
+<section class="how">
+  <p class="section-eyebrow">how it works</p>
+  <ol class="how__list">
+    <li class="how__step">
+      <span class="how__num mono">1</span>
+      <div class="how__body">
+        <h3>get a shirt.</h3>
+        <p>each one has a unique code sewn into a label on the hem.</p>
+      </div>
+    </li>
+    <li class="how__step">
+      <span class="how__num mono">2</span>
+      <div class="how__body">
+        <h3>wear it.</h3>
+        <p>someone smiles at you. it happens more than you think.</p>
+      </div>
+    </li>
+    <li class="how__step">
+      <span class="how__num mono">3</span>
+      <div class="how__body">
+        <h3>scan the label.</h3>
+        <p>log the smile. it joins a live map of smiles around the world.</p>
+      </div>
+    </li>
+    <li class="how__step how__step--last">
+      <span class="how__num mono">4</span>
+      <div class="how__body">
+        <h3>kids get helped.</h3>
+        <p>net profit from every shirt funds children's causes. all of it.</p>
+      </div>
+    </li>
+  </ol>
+</section>
+
+<section class="cta">
+  <h2 class="cta__headline">spread one.</h2>
+  <p class="cta__sub">a smile travels further than you think.</p>
+  <div class="cta__buttons">
+    <a href="map.html" class="btn btn--primary">explore the map</a>
+    <a href="#" id="scan-this-shirt" class="btn btn--ghost" hidden>scan this shirt (№ <span class="mono" id="cta-code">—</span>)</a>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="footer__inner">
+    <p class="footer__tag">a smile is contagious. so is this.</p>
+    <p class="footer__meta mono">#Smile · 2026 · all net profit donated</p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="db.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
