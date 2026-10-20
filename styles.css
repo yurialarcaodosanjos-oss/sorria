@@ -71,7 +71,14 @@ strong { font-weight: 600; }
   letter-spacing: -0.01em;
   line-height: 1;
 }
-
+.brand-mark--logo {
+  display: block;
+  height: 32px;
+  width: auto;
+}
+@media (max-width: 540px) {
+  .brand-mark--logo { height: 28px; }
+}
 /* when the brand mark is the SVG logo (text + smiley together) */
 .brand-mark--logo {
   display: block;
