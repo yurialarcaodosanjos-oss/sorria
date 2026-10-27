@@ -18,7 +18,7 @@
    ============================================================ */
 
 window.SMILE_CONFIG = {
-  SUPABASE_URL: "",
-  SUPABASE_ANON_KEY: "",
-  ADMIN_PASSWORD: "changeme"
+  SUPABASE_URL: "https://qoqycahogcdvttzzfbfk.supabase.co/rest/v1/",
+  SUPABASE_ANON_KEY: "sb_publishable_vpOUJvHy3h9phoYIjN3LPQ_6KbWae5Y",
+  ADMIN_PASSWORD: "Y#!u10RiVidaNova!"
 };
