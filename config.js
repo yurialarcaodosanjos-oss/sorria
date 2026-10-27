@@ -1,24 +1,17 @@
 /* ============================================================
    #Smile — Supabase + admin config
 
-   1. Supabase credentials
-      Go to https://supabase.com → your project → Settings → API
-      Copy "Project URL" → SUPABASE_URL
-      Copy "anon public" key → SUPABASE_ANON_KEY
+   SUPABASE_URL      — base project URL only, no trailing path
+   SUPABASE_ANON_KEY — the publishable key (safe for client-side code)
+   ADMIN_PASSWORD    — gates /admin
 
-   2. Admin password
-      Set a password for the /admin page.
-      ⚠️ This is a soft gate — the password is visible in the browser's
-      JavaScript source. It keeps casual visitors out but is NOT a real
-      security boundary. Don't put anything truly sensitive behind it.
-      Change it from "changeme" before deploying.
-
-   Until SUPABASE_URL + SUPABASE_ANON_KEY are filled in, the site uses
-   local-only storage.
+   ⚠️ ADMIN_PASSWORD is visible in the browser's page source. It keeps
+   casual visitors out but is NOT real security. Never reuse a password
+   you use anywhere else.
    ============================================================ */
 
 window.SMILE_CONFIG = {
-  SUPABASE_URL: "https://qoqycahogcdvttzzfbfk.supabase.co/rest/v1/",
+  SUPABASE_URL: "https://qoqycahogcdvttzzfbfk.supabase.co",
   SUPABASE_ANON_KEY: "sb_publishable_vpOUJvHy3h9phoYIjN3LPQ_6KbWae5Y",
-  ADMIN_PASSWORD: "Y#!u10RiVidaNova!"
+  ADMIN_PASSWORD: "smile-admin-2026"
 };
