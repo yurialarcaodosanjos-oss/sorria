@@ -43,6 +43,7 @@ window.CityPicker = (function () {
       s.async = true;
 
       function settle(ok) {
+        if (ok) buildIndex();
         loadState = ok ? "ready" : "failed";
         loadWaiters.forEach(function (fn) { fn(ok); });
         loadWaiters = [];
@@ -59,14 +60,40 @@ window.CityPicker = (function () {
     });
   }
 
+  // -------------------- accent-insensitive index --------------------
+  // People type "sao paulo", not "São Paulo" — especially on a US
+  // keyboard. Fold accents off both the index and the query so the
+  // two meet in the middle. Built once when the list arrives.
+  var foldedLabels = null;   // "são paulo, brazil" -> "sao paulo, brazil"
+  var foldedNames = null;    // just the part before the comma
+
+  function fold(s) {
+    return s
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "");  // strip combining diacritics
+  }
+
+  function buildIndex() {
+    var list = window.SMILE_CITIES || [];
+    foldedLabels = new Array(list.length);
+    foldedNames = new Array(list.length);
+    for (var i = 0; i < list.length; i++) {
+      var f = fold(list[i][0]);
+      foldedLabels[i] = f;
+      var comma = f.indexOf(",");
+      foldedNames[i] = comma === -1 ? f : f.slice(0, comma);
+    }
+  }
+
   // -------------------- search --------------------
   // cities.js is pre-sorted by population, so within an equal score
   // the bigger city naturally wins.
   function search(query) {
     var list = window.SMILE_CITIES;
-    if (!list) return [];
+    if (!list || !foldedLabels) return [];
 
-    var q = query.trim().toLowerCase();
+    var q = fold(query.trim());
     if (q.length < MIN_CHARS) return [];
 
     var strong = [];   // label starts with query
@@ -74,19 +101,14 @@ window.CityPicker = (function () {
     var loose = [];    // label contains query anywhere
 
     for (var i = 0; i < list.length; i++) {
-      var label = list[i][0];
-      var lower = label.toLowerCase();
+      var label = foldedLabels[i];
 
-      if (lower.indexOf(q) === 0) {
+      if (label.indexOf(q) === 0) {
         strong.push(list[i]);
-      } else {
-        var comma = lower.indexOf(",");
-        var namePart = comma === -1 ? lower : lower.slice(0, comma);
-        if (namePart.indexOf(q) === 0) {
-          nameHit.push(list[i]);
-        } else if (lower.indexOf(q) !== -1) {
-          loose.push(list[i]);
-        }
+      } else if (foldedNames[i].indexOf(q) === 0) {
+        nameHit.push(list[i]);
+      } else if (label.indexOf(q) !== -1) {
+        loose.push(list[i]);
       }
       // plenty of strong matches already — stop scanning
       if (strong.length >= MAX_RESULTS) break;
@@ -95,19 +117,17 @@ window.CityPicker = (function () {
     return strong.concat(nameHit).concat(loose).slice(0, MAX_RESULTS);
   }
 
-  // Exact match on the city-name portion, e.g. "chicago" -> "Chicago, IL".
-  // Used to snap casual typing to the canonical label on blur.
+  // Exact match on the city-name portion, e.g. "chicago" -> "Chicago, IL"
+  // or "sao paulo" -> "São Paulo, Brazil". Used to snap casual typing to
+  // the canonical label on blur.
   function exactNameMatch(query) {
     var list = window.SMILE_CITIES;
-    if (!list) return null;
-    var q = query.trim().toLowerCase();
+    if (!list || !foldedLabels) return null;
+    var q = fold(query.trim());
     if (!q) return null;
 
     for (var i = 0; i < list.length; i++) {
-      var lower = list[i][0].toLowerCase();
-      if (lower === q) return list[i];
-      var comma = lower.indexOf(",");
-      if (comma !== -1 && lower.slice(0, comma) === q) return list[i];
+      if (foldedLabels[i] === q || foldedNames[i] === q) return list[i];
     }
     return null;
   }
