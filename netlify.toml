@@ -41,3 +41,11 @@
   for = "/assets/*"
   [headers.values]
     Cache-Control = "public, max-age=2592000"
+
+# cities.js is the one file in assets/ that actually changes — the logo and
+# smiley never do. A short cache means a regenerated city list reaches people
+# within the hour even if the ?v= in citypicker.js wasn't bumped.
+[[headers]]
+  for = "/assets/cities.js"
+  [headers.values]
+    Cache-Control = "public, max-age=3600, must-revalidate"

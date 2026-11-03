@@ -19,7 +19,11 @@
    ============================================================ */
 
 window.CityPicker = (function () {
-  var CITIES_URL = "assets/cities.js";
+  // The ?v= is a cache-buster. assets/ is cached aggressively (good — this
+  // file is 500 KB), so the URL has to change whenever the city list is
+  // regenerated or browsers keep serving the old copy.
+  // ⚠️ Bump this number every time assets/cities.js is rebuilt.
+  var CITIES_URL = "assets/cities.js?v=2";
   var MIN_CHARS = 2;
   var MAX_RESULTS = 6;
 
