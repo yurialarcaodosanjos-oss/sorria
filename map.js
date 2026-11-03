@@ -61,9 +61,15 @@
   function buildUserSmilesAsync() {
     if (!window.db) return Promise.resolve([]);
     return window.db.getAllSmiles().then(function (rows) {
-      var cities = {};
-      rows.forEach(function (s) { if (s.city) cities[s.city] = true; });
-      var cityNames = Object.keys(cities);
+      // Smiles logged through the city picker already carry coordinates.
+      // Only older free-typed entries need a geocoding lookup.
+      var needsLookup = {};
+      rows.forEach(function (s) {
+        if (!s.city) return;
+        if (typeof s.lat === "number" && typeof s.lng === "number") return;
+        needsLookup[s.city] = true;
+      });
+      var cityNames = Object.keys(needsLookup);
 
       return Promise.all(cityNames.map(function (name) {
         return geocodeCity(name).then(function (coord) {
@@ -76,15 +82,25 @@
         var out = [];
         rows.forEach(function (s) {
           if (!s.city) return;
-          var coord = lookup[s.city];
-          if (!coord) return;
+
+          var lat, lng;
+          if (typeof s.lat === "number" && typeof s.lng === "number") {
+            lat = s.lat;
+            lng = s.lng;
+          } else {
+            var coord = lookup[s.city];
+            if (!coord) return;
+            lat = coord.lat;
+            lng = coord.lng;
+          }
+
           out.push({
             city: s.city,
             story: s.story,
             shirtCode: s.code,
             ts: s.ts,
-            lat: jitter(coord.lat),
-            lng: jitter(coord.lng),
+            lat: jitter(lat),
+            lng: jitter(lng),
             isYours: !!s.isYours
           });
         });

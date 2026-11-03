@@ -55,6 +55,8 @@
         all[code].smiles.push({
           city: smile.city || null,
           story: smile.story || null,
+          lat: typeof smile.lat === "number" ? smile.lat : null,
+          lng: typeof smile.lng === "number" ? smile.lng : null,
           ts: smile.ts || Date.now(),
           visitor_id: getVisitorId()
         });
@@ -80,6 +82,8 @@
               code: code,
               city: s.city,
               story: s.story,
+              lat: typeof s.lat === "number" ? s.lat : null,
+              lng: typeof s.lng === "number" ? s.lng : null,
               ts: s.ts,
               isYours: true
             });
@@ -141,15 +145,31 @@
       },
 
       addSmile: function (code, smile) {
+        var base = {
+          shirt_code: code,
+          city: smile.city || null,
+          story: smile.story || null,
+          visitor_id: getVisitorId()
+        };
+        var row = Object.assign({}, base);
+        if (typeof smile.lat === "number" && typeof smile.lng === "number") {
+          row.lat = smile.lat;
+          row.lng = smile.lng;
+        }
+
         return client.from("shirts")
           .upsert({ code: code }, { onConflict: "code" })
           .then(function () {
-            return client.from("smiles").insert({
-              shirt_code: code,
-              city: smile.city || null,
-              story: smile.story || null,
-              visitor_id: getVisitorId()
-            });
+            return client.from("smiles").insert(row);
+          })
+          .then(function (res) {
+            // If the lat/lng columns don't exist yet, save without them so
+            // logging never breaks. Run the migration to enable coordinates.
+            if (res.error && /lat|lng|column/i.test(res.error.message || "")) {
+              console.warn("#Smile · lat/lng columns missing — saved without coordinates. Run the SQL migration to enable them.");
+              return client.from("smiles").insert(base);
+            }
+            return res;
           })
           .then(function (res) {
             if (res.error) {
@@ -173,8 +193,10 @@
       },
 
       getAllSmiles: function () {
+        // select("*") so this keeps working whether or not the
+        // lat/lng columns have been added yet
         return client.from("smiles")
-          .select("shirt_code, city, story, created_at, visitor_id")
+          .select("*")
           .order("created_at", { ascending: false })
           .limit(500)
           .then(function (res) {
@@ -188,6 +210,8 @@
                 code: s.shirt_code,
                 city: s.city,
                 story: s.story,
+                lat: typeof s.lat === "number" ? s.lat : null,
+                lng: typeof s.lng === "number" ? s.lng : null,
                 ts: new Date(s.created_at).getTime(),
                 isYours: s.visitor_id === visitor
               };

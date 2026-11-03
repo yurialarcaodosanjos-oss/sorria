@@ -78,6 +78,33 @@
     });
   }
 
+  // -------------------- city autocomplete --------------------
+  // Picking from the list keeps everyone's city spelling identical
+  // and hands us coordinates, so the map never has to geocode.
+  var logCityPicker = window.CityPicker
+    ? window.CityPicker.attach(document.getElementById("log-city"))
+    : null;
+  var quickCityPicker = window.CityPicker
+    ? window.CityPicker.attach(document.getElementById("quick-city"))
+    : null;
+
+  // Build the smile payload, attaching coordinates when the city
+  // came from the list. Free-typed cities still work — the map
+  // geocodes those as before.
+  function buildSmile(cityText, storyText, picker) {
+    var smile = {
+      city: cityText || null,
+      story: storyText || null,
+      ts: Date.now()
+    };
+    var picked = picker && picker.getSelection();
+    if (picked && picked.label === cityText) {
+      smile.lat = picked.lat;
+      smile.lng = picked.lng;
+    }
+    return smile;
+  }
+
   function commitFirstSmile() {
     var city = document.getElementById("log-city").value.trim();
     var story = document.getElementById("log-story").value.trim();
@@ -87,7 +114,7 @@
       btn.textContent = "saving…";
     }
 
-    var smile = { city: city || null, story: story || null, ts: Date.now() };
+    var smile = buildSmile(city, story, logCityPicker);
     window.db.addSmile(CODE, smile).then(function (res) {
       if (!res.ok && res.error) {
         toast("couldn't save — " + res.error);
@@ -172,7 +199,8 @@
   function openModal() {
     modal.hidden = false;
     document.getElementById("quick-story").value = "";
-    document.getElementById("quick-city").value = "";
+    if (quickCityPicker) quickCityPicker.reset();
+    else document.getElementById("quick-city").value = "";
   }
   function closeModal() { modal.hidden = true; }
 
@@ -184,7 +212,7 @@
     quickSubmit.addEventListener("click", function () {
       var city = document.getElementById("quick-city").value.trim();
       var story = document.getElementById("quick-story").value.trim();
-      var smile = { city: city || null, story: story || null, ts: Date.now() };
+      var smile = buildSmile(city, story, quickCityPicker);
       quickSubmit.disabled = true;
       quickSubmit.textContent = "saving…";
       window.db.addSmile(CODE, smile).then(function (res) {

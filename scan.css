@@ -424,3 +424,49 @@
   from { opacity: 0; transform: translate(-50%, 20px); }
   to { opacity: 1; transform: translate(-50%, 0); }
 }
+
+/* ============================================================
+   city autocomplete
+   ============================================================ */
+.citypicker__menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 60;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: white;
+  border: 0.5px solid var(--line);
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(26, 23, 20, 0.10);
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.citypicker__menu[hidden] { display: none; }
+
+.citypicker__item {
+  padding: 9px 12px;
+  font-family: var(--body);
+  font-size: 14px;
+  color: var(--ink);
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.citypicker__item:hover {
+  background: var(--paper-soft);
+}
+
+.citypicker__item.is-active {
+  background: rgba(239, 159, 39, 0.14);
+  color: var(--ink);
+}
+
+/* keep the field above sibling fields so the menu isn't covered */
+.field:focus-within { position: relative; z-index: 61; }

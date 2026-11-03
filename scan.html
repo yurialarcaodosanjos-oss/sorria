@@ -14,7 +14,7 @@
 <body class="scan-body">
 
 <nav class="nav">
-  <a href="index.html" class="nav__brand"><img class="brand-mark brand-mark--logo" src="assets/logo.svg" alt="#Smile" /></a>
+  <a href="index.html" class="nav__brand"><span class="brand-mark">#Smile</span></a>
   <div class="nav__meta">
     <span class="nav__via">shirt № <span class="mono" id="nav-code">—</span></span>
   </div>
@@ -37,7 +37,7 @@
         <p class="step__sub">someone just smiled at you, didn't they?</p>
       </div>
 
-      <img class="step__smiley" src="assets/smiley.svg" alt="" aria-hidden="true" />
+      <img class="step__smiley" src="assets/smiley.png" alt="" aria-hidden="true" />
 
       <div class="step__actions">
         <button class="btn btn--primary" data-go="log">log the first smile</button>
@@ -57,7 +57,7 @@
 
       <div class="field">
         <label class="field__label" for="log-city">where</label>
-        <input type="text" id="log-city" class="field__input" placeholder="city, state (e.g. San Jose, CA)" maxlength="80" autocomplete="address-level2" />
+        <input type="text" id="log-city" class="field__input" placeholder="start typing your city…" maxlength="80" autocomplete="address-level2" />
       </div>
 
       <div class="field">
@@ -74,7 +74,7 @@
 
     <div class="step" data-step="confirm">
       <div class="confirm__icon">
-        <img src="assets/smiley.svg" alt="" aria-hidden="true" />
+        <img src="assets/smiley.png" alt="" aria-hidden="true" />
       </div>
 
       <h2 class="step__headline">
@@ -184,7 +184,7 @@
 
     <div class="field" style="margin-top: 24px;">
       <label class="field__label" for="quick-city">where</label>
-      <input type="text" id="quick-city" class="field__input" placeholder="city, state (e.g. San Jose, CA)" maxlength="80" autocomplete="address-level2" />
+      <input type="text" id="quick-city" class="field__input" placeholder="start typing your city…" maxlength="80" autocomplete="address-level2" />
     </div>
 
     <div class="field">
@@ -201,6 +201,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
 <script src="db.js"></script>
+<script src="citypicker.js"></script>
 <script src="scan.js"></script>
 </body>
 </html>
